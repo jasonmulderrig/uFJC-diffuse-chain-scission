@@ -1,0 +1,29 @@
+
+            Mesh.Algorithm = 8;
+            near_cavity_elem_size = DefineNumber[ 0.001, Name "Parameters/near_cavity_elem_size" ];
+            far_cavity_elem_size  = DefineNumber[ 0.2, Name "Parameters/far_cavity_elem_size" ];
+            r_cavity  = DefineNumber[ 0.05, Name "Parameters/r_cavity" ];
+            L         = DefineNumber[ 1, Name "Parameters/L"];
+            H         = DefineNumber[ 1, Name "Parameters/H"];
+            Point(1) = {0, 0, 0, near_cavity_elem_size};
+            Point(2) = {r_cavity, 0, 0, near_cavity_elem_size};
+            Point(3) = {2*r_cavity, 0, 0, near_cavity_elem_size};
+            Point(4) = {L, 0, 0, far_cavity_elem_size};
+            Point(5) = {L, H, 0, far_cavity_elem_size};
+            Point(6) = {0, H, 0, far_cavity_elem_size};
+            Point(7) = {0, 2*r_cavity, 0, near_cavity_elem_size};
+            Point(8) = {0, r_cavity, 0, near_cavity_elem_size};
+            Line(1) = {2, 3}; 
+            Line(2) = {3, 4}; 
+            Line(3) = {4, 5};
+            Line(4) = {5, 6};
+            Line(5) = {6, 7};
+            Line(6) = {7, 8};
+            Circle(7) = {8, 1, 2};
+            Circle(8) = {7, 1, 3};
+            Curve Loop(21) = {1, -8, 6, 7};
+            Curve Loop(22) = {2, 3, 4, 5, 8};
+            Plane Surface(31) = {21};
+            Plane Surface(32) = {-21, -22};
+            Mesh.MshFileVersion = 2.0;
+            
