@@ -3,6 +3,7 @@ from __future__ import division
 from dolfin import *
 import os
 import pathlib
+import pickle
 import subprocess
 from dolfin_utils.meshconvert import meshconvert
 import matplotlib.pyplot as plt
@@ -91,6 +92,17 @@ def gmsh_mesher(gmsh_file, subdir, mesh_name):
         geo_mesh.read(temp_mesh)
     
     return temp_mesh
+
+def save_pickle_object(savedir, object, object_filename):
+    object2file = open(savedir+object_filename+'.pickle', 'wb')
+    pickle.dump(object, object2file, pickle.HIGHEST_PROTOCOL)
+    object2file.close()
+
+def load_pickle_object(savedir, object_filename):
+    file2object = open(savedir+object_filename+'.pickle', 'rb')
+    object = pickle.load(file2object)
+    file2object.close()
+    return object
 
 def latex_formatting_figure(post_processing_parameters):
 

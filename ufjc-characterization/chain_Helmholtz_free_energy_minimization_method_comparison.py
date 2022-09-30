@@ -62,15 +62,15 @@ class ChainHelmholtzFreeEnergyMinimizationMethodComparisonCharacterizer(uFJCDiff
         cp = self.parameters.characterizer
 
         # Evaluate zeta_nu_char
-        psi_minimization_zeta_nu_char_single_chain_list = [GeneralizeduFJC(rate_dependence = 'rate_independent', nu = cp.nu_single_chain_list[1], zeta_nu_char = cp.psi_minimization_zeta_nu_char_single_chain_list[single_chain_num_indx], kappa_nu = cp.kappa_nu_single_chain_list[2]) for single_chain_num_indx in range(len(cp.psi_minimization_zeta_nu_char_single_chain_list))] # nu=125, kappa_nu=1000
+        psi_minimization_zeta_nu_char_single_chain_list = [GeneralizeduFJC(rate_dependence = 'rate_independent', nu = cp.nu_single_chain_list[1], zeta_nu_char = cp.psi_minimization_zeta_nu_char_single_chain_list[single_chain_indx], kappa_nu = cp.kappa_nu_single_chain_list[2]) for single_chain_indx in range(len(cp.psi_minimization_zeta_nu_char_single_chain_list))] # nu=125, kappa_nu=1000
 
-        psi_minimization_zeta_nu_char_lmbda_c_eq___single_chain_chunk       = [0. for single_chain_num_indx in range(len(psi_minimization_zeta_nu_char_single_chain_list))]
-        psi_minimization_zeta_nu_char_lmbda_nu___single_chain_chunk         = [0. for single_chain_num_indx in range(len(psi_minimization_zeta_nu_char_single_chain_list))]
-        psi_minimization_zeta_nu_char_lmbda_nu_psimin___single_chain_chunk  = [0. for single_chain_num_indx in range(len(psi_minimization_zeta_nu_char_single_chain_list))]
-        psi_minimization_zeta_nu_char_lmbda_nu_mthderr___single_chain_chunk = [0. for single_chain_num_indx in range(len(psi_minimization_zeta_nu_char_single_chain_list))]
+        psi_minimization_zeta_nu_char_lmbda_c_eq___single_chain_chunk       = [0. for single_chain_indx in range(len(psi_minimization_zeta_nu_char_single_chain_list))]
+        psi_minimization_zeta_nu_char_lmbda_nu___single_chain_chunk         = [0. for single_chain_indx in range(len(psi_minimization_zeta_nu_char_single_chain_list))]
+        psi_minimization_zeta_nu_char_lmbda_nu_psimin___single_chain_chunk  = [0. for single_chain_indx in range(len(psi_minimization_zeta_nu_char_single_chain_list))]
+        psi_minimization_zeta_nu_char_lmbda_nu_mthderr___single_chain_chunk = [0. for single_chain_indx in range(len(psi_minimization_zeta_nu_char_single_chain_list))]
 
-        for single_chain_num_indx in range(len(psi_minimization_zeta_nu_char_single_chain_list)):
-            single_chain = psi_minimization_zeta_nu_char_single_chain_list[single_chain_num_indx]
+        for single_chain_indx in range(len(psi_minimization_zeta_nu_char_single_chain_list)):
+            single_chain = psi_minimization_zeta_nu_char_single_chain_list[single_chain_indx]
 
             lmbda_c_eq_max = cp.zeta_nu_char_lmbda_c_eq_crit_factor*single_chain.lmbda_c_eq_crit
 
@@ -106,10 +106,10 @@ class ChainHelmholtzFreeEnergyMinimizationMethodComparisonCharacterizer(uFJCDiff
                 lmbda_nu_psimin.append(lmbda_nu_psimin_val)
                 lmbda_nu_mthderr.append(lmbda_nu_mthderr_val)
             
-            psi_minimization_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_num_indx]       = lmbda_c_eq
-            psi_minimization_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_num_indx]         = lmbda_nu
-            psi_minimization_zeta_nu_char_lmbda_nu_psimin___single_chain_chunk[single_chain_num_indx]  = lmbda_nu_psimin
-            psi_minimization_zeta_nu_char_lmbda_nu_mthderr___single_chain_chunk[single_chain_num_indx] = lmbda_nu_mthderr
+            psi_minimization_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_indx]       = lmbda_c_eq
+            psi_minimization_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_indx]         = lmbda_nu
+            psi_minimization_zeta_nu_char_lmbda_nu_psimin___single_chain_chunk[single_chain_indx]  = lmbda_nu_psimin
+            psi_minimization_zeta_nu_char_lmbda_nu_mthderr___single_chain_chunk[single_chain_indx] = lmbda_nu_mthderr
         
         self.psi_minimization_zeta_nu_char_single_chain_list = psi_minimization_zeta_nu_char_single_chain_list
         
@@ -120,15 +120,15 @@ class ChainHelmholtzFreeEnergyMinimizationMethodComparisonCharacterizer(uFJCDiff
 
 
         # Evaluate kappa_nu
-        psi_minimization_kappa_nu_single_chain_list = [GeneralizeduFJC(rate_dependence = 'rate_independent', nu = cp.nu_single_chain_list[1], zeta_nu_char = cp.zeta_nu_char_single_chain_list[2], kappa_nu = cp.psi_minimization_kappa_nu_single_chain_list[single_chain_num_indx]) for single_chain_num_indx in range(len(cp.psi_minimization_kappa_nu_single_chain_list))] # nu=125, zeta_nu_char=100
+        psi_minimization_kappa_nu_single_chain_list = [GeneralizeduFJC(rate_dependence = 'rate_independent', nu = cp.nu_single_chain_list[1], zeta_nu_char = cp.zeta_nu_char_single_chain_list[2], kappa_nu = cp.psi_minimization_kappa_nu_single_chain_list[single_chain_indx]) for single_chain_indx in range(len(cp.psi_minimization_kappa_nu_single_chain_list))] # nu=125, zeta_nu_char=100
 
-        psi_minimization_kappa_nu_lmbda_c_eq___single_chain_chunk       = [0. for single_chain_num_indx in range(len(psi_minimization_kappa_nu_single_chain_list))]
-        psi_minimization_kappa_nu_lmbda_nu___single_chain_chunk         = [0. for single_chain_num_indx in range(len(psi_minimization_kappa_nu_single_chain_list))]
-        psi_minimization_kappa_nu_lmbda_nu_psimin___single_chain_chunk  = [0. for single_chain_num_indx in range(len(psi_minimization_kappa_nu_single_chain_list))]
-        psi_minimization_kappa_nu_lmbda_nu_mthderr___single_chain_chunk = [0. for single_chain_num_indx in range(len(psi_minimization_kappa_nu_single_chain_list))]
+        psi_minimization_kappa_nu_lmbda_c_eq___single_chain_chunk       = [0. for single_chain_indx in range(len(psi_minimization_kappa_nu_single_chain_list))]
+        psi_minimization_kappa_nu_lmbda_nu___single_chain_chunk         = [0. for single_chain_indx in range(len(psi_minimization_kappa_nu_single_chain_list))]
+        psi_minimization_kappa_nu_lmbda_nu_psimin___single_chain_chunk  = [0. for single_chain_indx in range(len(psi_minimization_kappa_nu_single_chain_list))]
+        psi_minimization_kappa_nu_lmbda_nu_mthderr___single_chain_chunk = [0. for single_chain_indx in range(len(psi_minimization_kappa_nu_single_chain_list))]
 
-        for single_chain_num_indx in range(len(psi_minimization_kappa_nu_single_chain_list)):
-            single_chain = psi_minimization_kappa_nu_single_chain_list[single_chain_num_indx]
+        for single_chain_indx in range(len(psi_minimization_kappa_nu_single_chain_list)):
+            single_chain = psi_minimization_kappa_nu_single_chain_list[single_chain_indx]
 
             lmbda_c_eq_max = cp.kappa_nu_lmbda_c_eq_crit_factor*single_chain.lmbda_c_eq_crit
 
@@ -164,10 +164,10 @@ class ChainHelmholtzFreeEnergyMinimizationMethodComparisonCharacterizer(uFJCDiff
                 lmbda_nu_psimin.append(lmbda_nu_psimin_val)
                 lmbda_nu_mthderr.append(lmbda_nu_mthderr_val)
             
-            psi_minimization_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_num_indx]       = lmbda_c_eq
-            psi_minimization_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_num_indx]         = lmbda_nu
-            psi_minimization_kappa_nu_lmbda_nu_psimin___single_chain_chunk[single_chain_num_indx]  = lmbda_nu_psimin
-            psi_minimization_kappa_nu_lmbda_nu_mthderr___single_chain_chunk[single_chain_num_indx] = lmbda_nu_mthderr
+            psi_minimization_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_indx]       = lmbda_c_eq
+            psi_minimization_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_indx]         = lmbda_nu
+            psi_minimization_kappa_nu_lmbda_nu_psimin___single_chain_chunk[single_chain_indx]  = lmbda_nu_psimin
+            psi_minimization_kappa_nu_lmbda_nu_mthderr___single_chain_chunk[single_chain_indx] = lmbda_nu_mthderr
         
         self.psi_minimization_kappa_nu_single_chain_list = psi_minimization_kappa_nu_single_chain_list
         
@@ -188,24 +188,24 @@ class ChainHelmholtzFreeEnergyMinimizationMethodComparisonCharacterizer(uFJCDiff
         lmbda_nu_max   = 0
 
         fig = plt.figure()
-        for single_chain_num_indx in range(len(self.psi_minimization_zeta_nu_char_single_chain_list)):
-            lmbda_c_eq      = self.psi_minimization_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu        = self.psi_minimization_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu_crit   = self.psi_minimization_zeta_nu_char_single_chain_list[single_chain_num_indx].lmbda_nu_crit
-            lmbda_c_eq_crit = self.psi_minimization_zeta_nu_char_single_chain_list[single_chain_num_indx].lmbda_c_eq_crit
+        for single_chain_indx in range(len(self.psi_minimization_zeta_nu_char_single_chain_list)):
+            lmbda_c_eq      = self.psi_minimization_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_indx]
+            lmbda_nu        = self.psi_minimization_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_indx]
+            lmbda_nu_crit   = self.psi_minimization_zeta_nu_char_single_chain_list[single_chain_indx].lmbda_nu_crit
+            lmbda_c_eq_crit = self.psi_minimization_zeta_nu_char_single_chain_list[single_chain_indx].lmbda_c_eq_crit
             lmbda_c_eq_max  = max([lmbda_c_eq_max, lmbda_c_eq[-1]])
             lmbda_nu_max    = max([lmbda_nu_max, lmbda_nu[-1]])
             
-            plt.vlines(x=lmbda_c_eq_crit, ymin=lmbda_nu[0]-0.05, ymax=lmbda_nu_crit, linestyle=':', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=1)
-            plt.hlines(y=lmbda_nu_crit, xmin=lmbda_c_eq[0]-0.05, xmax=lmbda_c_eq_crit, linestyle=':', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=1)
+            plt.vlines(x=lmbda_c_eq_crit, ymin=lmbda_nu[0]-0.05, ymax=lmbda_nu_crit, linestyle=':', color=cp.color_list[single_chain_indx], alpha=1, linewidth=1)
+            plt.hlines(y=lmbda_nu_crit, xmin=lmbda_c_eq[0]-0.05, xmax=lmbda_c_eq_crit, linestyle=':', color=cp.color_list[single_chain_indx], alpha=1, linewidth=1)
         
-        for single_chain_num_indx in range(len(self.psi_minimization_zeta_nu_char_single_chain_list)):
-            lmbda_c_eq       = self.psi_minimization_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu         = self.psi_minimization_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu_psimin  = self.psi_minimization_zeta_nu_char_lmbda_nu_psimin___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu_mthderr = self.psi_minimization_zeta_nu_char_lmbda_nu_mthderr___single_chain_chunk[single_chain_num_indx]
-            plt.plot(lmbda_c_eq, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_zeta_nu_char_label_single_chain_list[single_chain_num_indx])
-            plt.plot(lmbda_c_eq, lmbda_nu_psimin, linestyle='-.', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5)
+        for single_chain_indx in range(len(self.psi_minimization_zeta_nu_char_single_chain_list)):
+            lmbda_c_eq       = self.psi_minimization_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_indx]
+            lmbda_nu         = self.psi_minimization_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_indx]
+            lmbda_nu_psimin  = self.psi_minimization_zeta_nu_char_lmbda_nu_psimin___single_chain_chunk[single_chain_indx]
+            lmbda_nu_mthderr = self.psi_minimization_zeta_nu_char_lmbda_nu_mthderr___single_chain_chunk[single_chain_indx]
+            plt.plot(lmbda_c_eq, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_zeta_nu_char_label_single_chain_list[single_chain_indx])
+            plt.plot(lmbda_c_eq, lmbda_nu_psimin, linestyle='-.', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5)
 
         plt.legend(loc='best')
         plt.xlim([-0.05, lmbda_c_eq_max + 0.1])
@@ -215,19 +215,19 @@ class ChainHelmholtzFreeEnergyMinimizationMethodComparisonCharacterizer(uFJCDiff
         save_current_figure(self.savedir, r'$\lambda_c^{eq}$', 30, r'$\lambda_{\nu}$', 30, "zeta_nu_char-lmbda_nu-vs-lmbda_c_eq-method-comparison")
         
         fig, (ax1, ax2) = plt.subplots(2, sharex=True)
-        for single_chain_num_indx in range(len(self.psi_minimization_zeta_nu_char_single_chain_list)):
-            lmbda_c_eq       = self.psi_minimization_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu         = self.psi_minimization_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu_psimin  = self.psi_minimization_zeta_nu_char_lmbda_nu_psimin___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu_mthderr = self.psi_minimization_zeta_nu_char_lmbda_nu_mthderr___single_chain_chunk[single_chain_num_indx]
-            lmbda_c_eq_crit  = self.psi_minimization_zeta_nu_char_single_chain_list[single_chain_num_indx].lmbda_c_eq_crit
+        for single_chain_indx in range(len(self.psi_minimization_zeta_nu_char_single_chain_list)):
+            lmbda_c_eq       = self.psi_minimization_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_indx]
+            lmbda_nu         = self.psi_minimization_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_indx]
+            lmbda_nu_psimin  = self.psi_minimization_zeta_nu_char_lmbda_nu_psimin___single_chain_chunk[single_chain_indx]
+            lmbda_nu_mthderr = self.psi_minimization_zeta_nu_char_lmbda_nu_mthderr___single_chain_chunk[single_chain_indx]
+            lmbda_c_eq_crit  = self.psi_minimization_zeta_nu_char_single_chain_list[single_chain_indx].lmbda_c_eq_crit
 
             lmbda_c_eq__lmbda_c_eq_crit = [x/lmbda_c_eq_crit for x in lmbda_c_eq]
 
-            ax1.plot(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_zeta_nu_char_label_single_chain_list[single_chain_num_indx])
-            ax1.plot(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu_psimin, linestyle='-.', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5)
+            ax1.plot(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_zeta_nu_char_label_single_chain_list[single_chain_indx])
+            ax1.plot(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu_psimin, linestyle='-.', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5)
             
-            ax2.semilogy(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu_mthderr, linestyle='-', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_zeta_nu_char_label_single_chain_list[single_chain_num_indx])
+            ax2.semilogy(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu_mthderr, linestyle='-', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_zeta_nu_char_label_single_chain_list[single_chain_indx])
         
         ax1.legend(loc='best')
         ax1.set_ylim([0.95, lmbda_nu_max + 0.1])
@@ -245,24 +245,24 @@ class ChainHelmholtzFreeEnergyMinimizationMethodComparisonCharacterizer(uFJCDiff
         lmbda_nu_max   = 0
 
         fig = plt.figure()
-        for single_chain_num_indx in range(len(self.psi_minimization_kappa_nu_single_chain_list)):
-            lmbda_c_eq      = self.psi_minimization_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu        = self.psi_minimization_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu_crit   = self.psi_minimization_kappa_nu_single_chain_list[single_chain_num_indx].lmbda_nu_crit
-            lmbda_c_eq_crit = self.psi_minimization_kappa_nu_single_chain_list[single_chain_num_indx].lmbda_c_eq_crit
+        for single_chain_indx in range(len(self.psi_minimization_kappa_nu_single_chain_list)):
+            lmbda_c_eq      = self.psi_minimization_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_indx]
+            lmbda_nu        = self.psi_minimization_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_indx]
+            lmbda_nu_crit   = self.psi_minimization_kappa_nu_single_chain_list[single_chain_indx].lmbda_nu_crit
+            lmbda_c_eq_crit = self.psi_minimization_kappa_nu_single_chain_list[single_chain_indx].lmbda_c_eq_crit
             lmbda_c_eq_max  = max([lmbda_c_eq_max, lmbda_c_eq[-1]])
             lmbda_nu_max    = max([lmbda_nu_max, lmbda_nu[-1]])
             
-            plt.vlines(x=lmbda_c_eq_crit, ymin=lmbda_nu[0]-0.05, ymax=lmbda_nu_crit, linestyle=':', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=1)
-            plt.hlines(y=lmbda_nu_crit, xmin=lmbda_c_eq[0]-0.05, xmax=lmbda_c_eq_crit, linestyle=':', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=1)
+            plt.vlines(x=lmbda_c_eq_crit, ymin=lmbda_nu[0]-0.05, ymax=lmbda_nu_crit, linestyle=':', color=cp.color_list[single_chain_indx], alpha=1, linewidth=1)
+            plt.hlines(y=lmbda_nu_crit, xmin=lmbda_c_eq[0]-0.05, xmax=lmbda_c_eq_crit, linestyle=':', color=cp.color_list[single_chain_indx], alpha=1, linewidth=1)
         
-        for single_chain_num_indx in range(len(self.psi_minimization_kappa_nu_single_chain_list)):
-            lmbda_c_eq       = self.psi_minimization_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu         = self.psi_minimization_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu_psimin  = self.psi_minimization_kappa_nu_lmbda_nu_psimin___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu_mthderr = self.psi_minimization_kappa_nu_lmbda_nu_mthderr___single_chain_chunk[single_chain_num_indx]
-            plt.plot(lmbda_c_eq, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_kappa_nu_label_single_chain_list[single_chain_num_indx])
-            plt.plot(lmbda_c_eq, lmbda_nu_psimin, linestyle='-.', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5)
+        for single_chain_indx in range(len(self.psi_minimization_kappa_nu_single_chain_list)):
+            lmbda_c_eq       = self.psi_minimization_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_indx]
+            lmbda_nu         = self.psi_minimization_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_indx]
+            lmbda_nu_psimin  = self.psi_minimization_kappa_nu_lmbda_nu_psimin___single_chain_chunk[single_chain_indx]
+            lmbda_nu_mthderr = self.psi_minimization_kappa_nu_lmbda_nu_mthderr___single_chain_chunk[single_chain_indx]
+            plt.plot(lmbda_c_eq, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_kappa_nu_label_single_chain_list[single_chain_indx])
+            plt.plot(lmbda_c_eq, lmbda_nu_psimin, linestyle='-.', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5)
 
         plt.legend(loc='best')
         plt.xlim([-0.05, lmbda_c_eq_max + 0.1])
@@ -272,19 +272,19 @@ class ChainHelmholtzFreeEnergyMinimizationMethodComparisonCharacterizer(uFJCDiff
         save_current_figure(self.savedir, r'$\lambda_c^{eq}$', 30, r'$\lambda_{\nu}$', 30, "kappa_nu-lmbda_nu-vs-lmbda_c_eq-method-comparison")
         
         fig, (ax1, ax2) = plt.subplots(2, sharex=True)
-        for single_chain_num_indx in range(len(self.psi_minimization_kappa_nu_single_chain_list)):
-            lmbda_c_eq       = self.psi_minimization_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu         = self.psi_minimization_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu_psimin  = self.psi_minimization_kappa_nu_lmbda_nu_psimin___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu_mthderr = self.psi_minimization_kappa_nu_lmbda_nu_mthderr___single_chain_chunk[single_chain_num_indx]
-            lmbda_c_eq_crit  = self.psi_minimization_kappa_nu_single_chain_list[single_chain_num_indx].lmbda_c_eq_crit
+        for single_chain_indx in range(len(self.psi_minimization_kappa_nu_single_chain_list)):
+            lmbda_c_eq       = self.psi_minimization_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_indx]
+            lmbda_nu         = self.psi_minimization_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_indx]
+            lmbda_nu_psimin  = self.psi_minimization_kappa_nu_lmbda_nu_psimin___single_chain_chunk[single_chain_indx]
+            lmbda_nu_mthderr = self.psi_minimization_kappa_nu_lmbda_nu_mthderr___single_chain_chunk[single_chain_indx]
+            lmbda_c_eq_crit  = self.psi_minimization_kappa_nu_single_chain_list[single_chain_indx].lmbda_c_eq_crit
 
             lmbda_c_eq__lmbda_c_eq_crit = [x/lmbda_c_eq_crit for x in lmbda_c_eq]
 
-            ax1.plot(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_kappa_nu_label_single_chain_list[single_chain_num_indx])
-            ax1.plot(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu_psimin, linestyle='-.', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5)
+            ax1.plot(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_kappa_nu_label_single_chain_list[single_chain_indx])
+            ax1.plot(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu_psimin, linestyle='-.', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5)
             
-            ax2.semilogy(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu_mthderr, linestyle='-', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_kappa_nu_label_single_chain_list[single_chain_num_indx])
+            ax2.semilogy(lmbda_c_eq__lmbda_c_eq_crit, lmbda_nu_mthderr, linestyle='-', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5, label=cp.psi_minimization_kappa_nu_label_single_chain_list[single_chain_indx])
         
         ax1.legend(loc='best')
         ax1.set_ylim([0.95, lmbda_nu_max + 0.1])

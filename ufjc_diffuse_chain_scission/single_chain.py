@@ -13,7 +13,7 @@ from scipy import integrate
 min_exponent = np.log(sys.float_info.min)/np.log(10)
 max_exponent = np.log(sys.float_info.max)/np.log(10)
 eps_val      = np.finfo(float).eps
-cond_val     = eps_val*5e11
+cond_val     = eps_val*5e12
 
 ################################################################################################################################
 # Generalized extensible freely jointed chain (gen-uFJC)
@@ -270,7 +270,7 @@ class GeneralizeduFJC:
     
     # Segment stretch value under an applied chain force xi_c_hat
     def lmbda_nu_xi_c_hat_func(self, xi_c_hat):
-        if xi_c_hat > self.xi_c_crit:
+        if xi_c_hat > self.xi_c_crit + cond_val:
             sys.exit('Error: Applied chain force value is greater than the analytically calculated critical maximum chain force value xi_c_crit')
         else:
             return 1. + 1./self.kappa_nu*xi_c_hat
@@ -327,6 +327,12 @@ class GeneralizeduFJC:
     def p_c_sci_hat_func(self, lmbda_nu_hat):
         return 1. - self.p_c_sur_hat_func(lmbda_nu_hat)
     
+    def upsilon_c_func(self, lmbda_nu_hat):
+        return (1.-cond_val)*self.p_c_sur_hat_func(lmbda_nu_hat) + cond_val
+
+    def d_c_func(self, lmbda_nu_hat):
+        return 1. - self.upsilon_c_func(lmbda_nu_hat)
+    
     # Nondimensional chain scission energy
     def epsilon_cnu_sci_hat_func(self, lmbda_nu_hat):
         return self.epsilon_nu_sci_hat_func(lmbda_nu_hat)
@@ -376,12 +382,12 @@ class GeneralizeduFJC:
         return p_nu_sci_hat_cum_intgrl_val_prior + integrate.trapezoid([p_nu_sci_hat_prior, p_nu_sci_hat_val], x=[t_prior, t_val])
     
     # Rate-dependent probability of chain scission
-    def gamma_c_func(self, omega_0, p_nu_sci_hat_cum_intgrl_val):
-        return 1. - np.exp(-self.nu*omega_0*p_nu_sci_hat_cum_intgrl_val)
+    def gamma_c_func(self, p_nu_sci_hat_cum_intgrl_val):
+        return 1. - np.exp(-self.nu*self.omega_0*p_nu_sci_hat_cum_intgrl_val)
     
     # Rate-dependent probability of chain survival
-    def rho_c_func(self, omega_0, p_nu_sci_hat_cum_intgrl_val):
-        return 1. - self.gamma_c_func(omega_0, p_nu_sci_hat_cum_intgrl_val)
+    def rho_c_func(self, p_nu_sci_hat_cum_intgrl_val):
+        return 1. - self.gamma_c_func(p_nu_sci_hat_cum_intgrl_val)
 
     # Nondimensional dissipated chain scission energy
     def epsilon_cnu_diss_hat_func(self, **kwargs):
@@ -655,11 +661,17 @@ class GeneralizeduFJC:
     
     # Probability of chain survival in ufl for FEniCS implementation
     def p_c_sur_hat_ufl_func(self, lmbda_nu_hat, lmbda_c_eq_hat):
-        return (1.-cond_val)*(self.p_nu_sur_hat_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat)**self.nu)**2 + cond_val
+        return self.p_nu_sur_hat_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat)**self.nu
     
     # Probability of chain scission in ufl for FEniCS implementation
     def p_c_sci_hat_ufl_func(self, lmbda_nu_hat, lmbda_c_eq_hat):
         return 1. - self.p_c_sur_hat_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat)
+    
+    def upsilon_c_ufl_func(self, lmbda_nu_hat, lmbda_c_eq_hat):
+        return (1.-cond_val)*self.p_c_sur_hat_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat) + cond_val
+
+    def d_c_ufl_func(self, lmbda_nu_hat, lmbda_c_eq_hat):
+        return 1. - self.upsilon_c_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat)
     
     # # Nondimensional chain scission energy
     # def epsilon_cnu_sci_hat_func(self, lmbda_nu_hat):

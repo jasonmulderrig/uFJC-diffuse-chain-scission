@@ -3,20 +3,25 @@ import numpy as np
 import os
 import pathlib
 import sys
-import matplotlib.pyplot as plt
 from types import SimpleNamespace
 
 class AppliedDeformation(object):
 
-    def __init__(self, parameters, F_func):
+    def __init__(self, parameters, F_func, initialize_lmbda, store_initialized_lmbda_, calculate_lmbda_func, store_calculated_lmbda, store_calculated_lmbda_chunk_post_processing, calculate_u_func, save2deformation):
 
-        if hasattr(parameters, "material") == False or hasattr(parameters, "deformation") == False:
-            sys.exit("Need to specify either material parameters, deformation parameters, or both in order to define the applied deformation history")
+        if hasattr(parameters, "deformation") == False:
+            sys.exit("Need to specify deformation parameters in order to define the applied deformation history")
 
-        self.mp = parameters.material
         self.dp = parameters.deformation
 
-        self.F_func = F_func # argument: t # sec
+        self.F_func                                       = F_func # argument: t # sec
+        self.initialize_lmbda                             = initialize_lmbda
+        self.store_initialized_lmbda                      = store_initialized_lmbda_
+        self.calculate_lmbda_func                         = calculate_lmbda_func
+        self.store_calculated_lmbda                       = store_calculated_lmbda
+        self.store_calculated_lmbda_chunk_post_processing = store_calculated_lmbda_chunk_post_processing
+        self.calculate_u_func                             = calculate_u_func
+        self.save2deformation                             = save2deformation
         
         self.define_deformation()
     
@@ -24,6 +29,7 @@ class AppliedDeformation(object):
         """
         Define the applied deformation history
         """
+        deformation = SimpleNamespace()
 
         # Deformation stepping calculations
         t_temp       = np.linspace(self.dp.t_min, self.dp.t_max, int(1e5)) # sec
@@ -53,22 +59,13 @@ class AppliedDeformation(object):
         t_val    = self.dp.t_min # initialize the time value at zero
         t        = [] # sec
         t_chunks = [] # sec
-        if self.dp.deformation_type == 'uniaxial':
-            lmbda_1_val    = 1 # assuming no pre-swelling of the network
-            lmbda_1        = [] # unitless
-            lmbda_1_chunks = [] # unitless
-        elif self.dp.deformation_type == 'equibiaxial': pass
-        elif self.dp.deformation_type == 'simple_shear': pass
+        lmbda    = self.initialize_lmbda()
 
         # Append to appropriate lists
         t.append(t_val)
         t_chunks.append(t_val)
         chunk_indx.append(chunk_indx_val)
-        if self.dp.deformation_type == 'uniaxial':
-            lmbda_1.append(lmbda_1_val)
-            lmbda_1_chunks.append(lmbda_1_val)
-        elif self.dp.deformation_type == 'equibiaxial': pass
-        elif self.dp.deformation_type == 'simple_shear': pass
+        lmbda = self.store_initialized_lmbda(lmbda)
 
         # update the chunk iteration counter
         chunk_counter  += 1
@@ -79,26 +76,17 @@ class AppliedDeformation(object):
 
         while t_val <= self.dp.t_max:
             # Calculate displacement at a particular time step
-            if self.dp.deformation_type == 'uniaxial':
-                lmbda_1_val = self.F_func(t_val)
-            elif self.dp.deformation_type == 'equibiaxial': pass
-            elif self.dp.deformation_type == 'simple_shear': pass
+            lmbda_val = self.calculate_lmbda_func(t_val)
 
             # Append to appropriate lists
             t.append(t_val)
-            if self.dp.deformation_type == 'uniaxial':
-                lmbda_1.append(lmbda_1_val)
-            elif self.dp.deformation_type == 'equibiaxial': pass
-            elif self.dp.deformation_type == 'simple_shear': pass
+            lmbda = self.store_calculated_lmbda(lmbda, lmbda_val)
 
             if chunk_counter == t_step_chunk_num:
                 # Append to appropriate lists
                 t_chunks.append(t_val)
                 chunk_indx.append(chunk_indx_val)
-                if self.dp.deformation_type == 'uniaxial':
-                    lmbda_1_chunks.append(lmbda_1_val)
-                elif self.dp.deformation_type == 'equibiaxial': pass
-                elif self.dp.deformation_type == 'simple_shear': pass
+                lmbda = self.store_calculated_lmbda_chunk_post_processing(lmbda, lmbda_val)
 
                 # update the time step chunk iteration counter
                 chunk_counter = 0
@@ -108,12 +96,7 @@ class AppliedDeformation(object):
             chunk_counter  += 1
             chunk_indx_val += 1
         
-        # Calculate displacement
-        if self.dp.deformation_type == 'uniaxial':
-            u        = [x-1 for x in lmbda_1]
-            u_chunks = [x-1 for x in lmbda_1_chunks]
-        elif self.dp.deformation_type == 'equibiaxial': pass
-        elif self.dp.deformation_type == 'simple_shear': pass
+        u = self.calculate_u_func(lmbda)
 
         # If the endpoint of the chunked applied deformation is not equal to the true endpoint of the applied deformation, then give the user the option to kill the simulation, or proceed on
         if chunk_indx[-1] != len(t)-1:
@@ -121,17 +104,13 @@ class AppliedDeformation(object):
             if terminal_statement.lower() == 'yes':
                 sys.exit()
             else: pass
+        
+        deformation.t          = t
+        deformation.t_chunks   = t_chunks
+        deformation.chunk_indx = chunk_indx
+        deformation            = self.save2deformation(deformation, lmbda, u)
 
-        if self.dp.deformation_type == 'uniaxial':
-            self.t              = t
-            self.t_chunks       = t_chunks
-            self.lmbda_1        = lmbda_1
-            self.lmbda_1_chunks = lmbda_1_chunks
-            self.u              = u
-            self.u_chunks       = u_chunks
-            self.chunk_indx     = chunk_indx
-        elif self.dp.deformation_type == 'equibiaxial': pass
-        elif self.dp.deformation_type == 'simple_shear': pass
+        for key, value in vars(deformation).items(): setattr(self, key, value)
     
     def finalization(self):
         """

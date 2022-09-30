@@ -2,10 +2,10 @@
 from __future__ import division
 from dolfin import *
 from .default_parameters import default_parameters
-from .polydisperse_chain_network import GeneralizeduFJCNetwork
 from .deformation import AppliedDeformation
 from .utility import generate_savedir
 import numpy as np
+import sys
 import os
 import pathlib
 import matplotlib.pyplot as plt
@@ -63,7 +63,7 @@ class uFJCDiffuseChainScissionProblem(object):
         self.fem.bc_u = self.define_bc_u()
 
         # Deformation
-        self.deformation = AppliedDeformation(self.parameters, self.F_func)
+        self.deformation = AppliedDeformation(self.parameters, self.F_func, self.initialize_lmbda, self.store_initialized_lmbda, self.calculate_lmbda_func, self.store_calculated_lmbda, self.store_calculated_lmbda_chunk_post_processing, self.calculate_u_func, self.save2deformation)
 
         # Post-processing
         ppp = self.parameters.post_processing
@@ -145,14 +145,47 @@ class uFJCDiffuseChainScissionProblem(object):
         """
         return []
     
-    def F_func(self, t):
+    def F_func(self):
         """
         Function defining the deformation
         """
         pass
+
+    def initialize_lmbda(self):
+        pass
+    
+    def store_initialized_lmbda(self):
+        pass
+    
+    def calculate_lmbda_func(self):
+        pass
+    
+    def store_calculated_lmbda(self):
+        pass
+    
+    def store_calculated_lmbda_chunk_post_processing(self):
+        pass
+    
+    def calculate_u_func(self):
+        pass
+    
+    def save2deformation(self):
+        pass
     
     def prefix(self):
         return "problem"
+    
+    def strong_form_initialize_sigma_chunks(self):
+        pass
+    
+    def lr_cg_deformation_gradient_func(self):
+        pass
+    
+    def strong_form_calculate_sigma_func(self):
+        pass
+    
+    def strong_form_store_calculated_sigma_chunks(self):
+        pass
     
     def set_homogeneous_strong_form_deformation_finalization(self):
         """
@@ -183,7 +216,7 @@ class uFJCDiffuseChainScissionProblem(object):
 
             # Post-processing
             if deformation.t_indx in deformation.chunk_indx:
-                strong_form_chunks = self.material.homogeneous_strong_form_post_processing(deformation, strong_form_results, strong_form_chunks)
+                strong_form_chunks = self.material.homogeneous_strong_form_chunk_post_processing(deformation, strong_form_results, strong_form_chunks)
         
         # Store chunks and perform any finalizations, such as data visualization
         self.strong_form_chunks = strong_form_chunks
@@ -193,6 +226,15 @@ class uFJCDiffuseChainScissionProblem(object):
         """
         Update Dirichlet boundary conditions"
         """
+        pass
+
+    def weak_form_initialize_deformation_sigma_chunks(self):
+        pass
+    
+    def weak_form_store_calculated_sigma_chunks(self):
+        pass
+    
+    def weak_form_store_calculated_deformation_chunks(self):
         pass
 
     def set_user_fenics_weak_form_post_processing(self):
@@ -231,7 +273,7 @@ class uFJCDiffuseChainScissionProblem(object):
 
             # Post-processing
             if deformation.t_indx in deformation.chunk_indx: # the elements in chunk_indx are guaranteed to be unique
-                weak_form_chunks = self.material.fenics_weak_form_post_processing(deformation, weak_form_chunks, self.fem, self.file_results, self.parameters)
+                weak_form_chunks = self.material.fenics_weak_form_chunk_post_processing(deformation, weak_form_chunks, self.fem, self.file_results, self.parameters)
             
             self.set_user_fenics_weak_form_post_processing()
         

@@ -76,7 +76,7 @@ class TotalDistortedSegmentPotentialEnergyFunctionCharacterizer(uFJCDiffuseChain
             
             overline_u_nu_locmin_hat = u_nu_locmin_hat/single_chain.zeta_nu_char
             overline_u_nu_locmax_hat = u_nu_locmax_hat/single_chain.zeta_nu_char
-            overline_u_nu_hat        = [x/single_chain.zeta_nu_char for x in u_nu_hat]
+            overline_u_nu_hat        = [u_nu_hat_val/single_chain.zeta_nu_char for u_nu_hat_val in u_nu_hat]
 
             lmbda_nu_hat___hat_chunk[lmbda_nu_hat_indx]             = lmbda_nu_hat
             lmbda_nu_locmin_hat___hat_chunk[lmbda_nu_hat_indx]      = lmbda_nu_locmin_hat

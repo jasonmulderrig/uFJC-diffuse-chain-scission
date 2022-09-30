@@ -78,21 +78,21 @@ class SegmentPotentialEnergyFunctionCharacterizer(uFJCDiffuseChainScissionCharac
             u_nu_har_comp.append(u_nu_har_comp_val)
             u_nu_sci_comp.append(u_nu_sci_comp_val)
         
-        overline_u_nu_morse      = [x/single_chain.zeta_nu_char for x in u_nu_morse]
-        overline_u_nu_ln_squared = [x/single_chain.zeta_nu_char for x in u_nu_ln_squared]
-        overline_u_nu_lj         = [x/single_chain.zeta_nu_char for x in u_nu_lj]
-        overline_u_nu_har        = [x/single_chain.zeta_nu_char for x in u_nu_har]
-        overline_u_nu            = [x/single_chain.zeta_nu_char for x in u_nu]
-        overline_u_nu_har_comp   = [x/single_chain.zeta_nu_char for x in u_nu_har_comp]
-        overline_u_nu_sci_comp   = [x/single_chain.zeta_nu_char for x in u_nu_sci_comp]
+        overline_u_nu_morse      = [u_nu_morse_val/single_chain.zeta_nu_char for u_nu_morse_val in u_nu_morse]
+        overline_u_nu_ln_squared = [u_nu_ln_squared_val/single_chain.zeta_nu_char for u_nu_ln_squared_val in u_nu_ln_squared]
+        overline_u_nu_lj         = [u_nu_lj_val/single_chain.zeta_nu_char for u_nu_lj_val in u_nu_lj]
+        overline_u_nu_har        = [u_nu_har_val/single_chain.zeta_nu_char for u_nu_har_val in u_nu_har]
+        overline_u_nu            = [u_nu_val/single_chain.zeta_nu_char for u_nu_val in u_nu]
+        overline_u_nu_har_comp   = [u_nu_har_comp_val/single_chain.zeta_nu_char for u_nu_har_comp_val in u_nu_har_comp]
+        overline_u_nu_sci_comp   = [u_nu_sci_comp_val/single_chain.zeta_nu_char for u_nu_sci_comp_val in u_nu_sci_comp]
 
-        tilde_u_nu_morse      = [x+1. for x in overline_u_nu_morse]
-        tilde_u_nu_ln_squared = [x+1. for x in overline_u_nu_ln_squared]
-        tilde_u_nu_lj         = [x+1. for x in overline_u_nu_lj]
-        tilde_u_nu_har        = [x+1. for x in overline_u_nu_har]
-        tilde_u_nu            = [x+1. for x in overline_u_nu]
-        tilde_u_nu_har_comp   = [x+1. for x in overline_u_nu_har_comp]
-        tilde_u_nu_sci_comp   = [x+1. for x in overline_u_nu_sci_comp]
+        tilde_u_nu_morse      = [overline_u_nu_morse_val+1. for overline_u_nu_morse_val in overline_u_nu_morse]
+        tilde_u_nu_ln_squared = [overline_u_nu_ln_squared_val+1. for overline_u_nu_ln_squared_val in overline_u_nu_ln_squared]
+        tilde_u_nu_lj         = [overline_u_nu_lj_val+1. for overline_u_nu_lj_val in overline_u_nu_lj]
+        tilde_u_nu_har        = [overline_u_nu_har_val+1. for overline_u_nu_har_val in overline_u_nu_har]
+        tilde_u_nu            = [overline_u_nu_val+1. for overline_u_nu_val in overline_u_nu]
+        tilde_u_nu_har_comp   = [overline_u_nu_har_comp_val+1. for overline_u_nu_har_comp_val in overline_u_nu_har_comp]
+        tilde_u_nu_sci_comp   = [overline_u_nu_sci_comp_val+1. for overline_u_nu_sci_comp_val in overline_u_nu_sci_comp]
 
         self.single_chain = single_chain
 

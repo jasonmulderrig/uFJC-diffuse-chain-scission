@@ -185,20 +185,28 @@ def default_material_parameters():
     # Define various characteristics of the deformation for the network
     network_model                      = "statistical_mechanics_model"
     phenomenological_model             = "neo_hookean"
-    chain_level_load_sharing           = "equal_strain"
-    micro2macro_homogenization_scheme  = "eight_chain_model"
-    macro2micro_deformation_assumption = "nonaffine"
-    rate_dependence                    = "rate_independent"
+    physical_dimension                 = 2
+    physical_dimensionality            = "two_dimensional"
     incompressibility_assumption       = "nearly_incompressible"
+    macro2micro_deformation_assumption = "nonaffine"
+    micro2macro_homogenization_scheme  = "eight_chain_model"
+    chain_level_load_sharing           = "equal_strain"
+    rate_dependence                    = "rate_independent"
+    two_dimensional_formulation        = "plane_strain"
+    microdisk_quadrature_order         = 1
     microsphere_quadrature_order       = 1
 
     material.network_model                      = network_model
     material.phenomenological_model             = phenomenological_model
-    material.chain_level_load_sharing           = chain_level_load_sharing
-    material.micro2macro_homogenization_scheme  = micro2macro_homogenization_scheme
-    material.macro2micro_deformation_assumption = macro2micro_deformation_assumption
-    material.rate_dependence                    = rate_dependence
+    material.physical_dimension                 = physical_dimension
+    material.physical_dimensionality            = physical_dimensionality
     material.incompressibility_assumption       = incompressibility_assumption
+    material.macro2micro_deformation_assumption = macro2micro_deformation_assumption
+    material.micro2macro_homogenization_scheme  = micro2macro_homogenization_scheme
+    material.chain_level_load_sharing           = chain_level_load_sharing
+    material.rate_dependence                    = rate_dependence
+    material.two_dimensional_formulation        = two_dimensional_formulation
+    material.microdisk_quadrature_order         = microdisk_quadrature_order
     material.microsphere_quadrature_order       = microsphere_quadrature_order
 
     return material

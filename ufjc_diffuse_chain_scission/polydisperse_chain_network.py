@@ -7,6 +7,7 @@ from __future__ import division
 from dolfin import *
 from .single_chain import GeneralizeduFJC, EqualStrainGeneralizeduFJC, EqualForceGeneralizeduFJC
 from .microsphere_quadrature import MicrosphereQuadratureScheme
+from .microdisk_quadrature import MicrodiskQuadratureScheme
 import sys
 import numpy as np
 from types import SimpleNamespace
@@ -16,7 +17,57 @@ from copy import deepcopy
 min_exponent = np.log(sys.float_info.min)/np.log(10)
 max_exponent = np.log(sys.float_info.max)/np.log(10)
 
-class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
+class TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
     def __init__(self):
         pass
@@ -26,11 +77,7 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
         chunks  = SimpleNamespace()
 
         # initialize lists to zeros - necessary for irreversibility
-        if self.deformation_type == 'uniaxial':
-            sigma_11_chunks = [] # unitless
-            chunks.sigma_11_chunks = sigma_11_chunks
-        elif self.deformation_type == 'equibiaxial': pass
-        elif self.deformation_type == 'simple_shear': pass
+        chunks = self.strong_form_initialize_sigma_chunks(chunks)
         
         # lmbda_c
         chunks.lmbda_c_chunks = []
@@ -96,13 +143,7 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
         return results, chunks
 
     def homogeneous_strong_form_solve_step(self, deformation, results):
-        if self.deformation_type == 'uniaxial':
-            lmbda_1_val = deformation.lmbda_1[deformation.t_indx]
-            lmbda_2_val = 1./np.sqrt(lmbda_1_val)
-            F_val = np.diagflat([lmbda_1_val, lmbda_2_val, lmbda_2_val])
-            C_val = np.einsum('jJ,jK->JK', F_val, F_val)
-        elif self.deformation_type == 'equibiaxial': pass
-        elif self.deformation_type == 'simple_shear': pass
+        F_val, C_val, b_val = self.lr_cg_deformation_gradient_func(deformation)
 
         Upsilon_c_val                     = 0
         D_c_val                           = 0
@@ -120,8 +161,8 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
             lmbda_nu___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_func(lmbda_c_eq___nu_val)
             # impose irreversibility
             lmbda_nu_max___nu_val                  = max([results.lmbda_nu_max_val[nu_indx], lmbda_nu___nu_val])
-            upsilon_c___nu_val                     = self.single_chain_list[nu_indx].p_c_sur_hat_func(lmbda_nu_max___nu_val)
-            d_c___nu_val                           = self.single_chain_list[nu_indx].p_c_sci_hat_func(lmbda_nu_max___nu_val)
+            upsilon_c___nu_val                     = self.single_chain_list[nu_indx].upsilon_c_func(lmbda_nu_max___nu_val)
+            d_c___nu_val                           = self.single_chain_list[nu_indx].d_c_func(lmbda_nu_max___nu_val)
             epsilon_cnu_diss_hat___nu_val          = self.single_chain_list[nu_indx].epsilon_cnu_diss_hat_func(lmbda_nu_hat_max = lmbda_nu_max___nu_val, lmbda_nu_hat_val = lmbda_nu___nu_val, lmbda_nu_hat_val_prior = results.lmbda_nu_val[nu_indx], epsilon_cnu_diss_hat_val_prior = results.epsilon_cnu_diss_hat_val[nu_indx])
             epsilon_c_diss_hat___nu_val            = epsilon_cnu_diss_hat___nu_val*self.nu_list[nu_indx]
             overline_epsilon_cnu_diss_hat___nu_val = epsilon_cnu_diss_hat___nu_val/self.zeta_nu_char
@@ -163,15 +204,7 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
         return results
     
-    def homogeneous_strong_form_post_processing(self, deformation, results, chunks):
-        if self.deformation_type == 'uniaxial':
-            lmbda_1_val = deformation.lmbda_1[deformation.t_indx]
-            lmbda_2_val = 1./np.sqrt(lmbda_1_val)
-            F_val = np.diagflat([lmbda_1_val, lmbda_2_val, lmbda_2_val])
-            b_val = np.einsum('jJ,kJ->jk', F_val, F_val)
-        elif self.deformation_type == 'equibiaxial': pass
-        elif self.deformation_type == 'simple_shear': pass
-
+    def homogeneous_strong_form_chunk_post_processing(self, deformation, results, chunks):
         for nu_chunk_indx in range(len(self.nu_chunks_indx_list)):
             # first dimension is nu_chunk_val: list[nu_chunk_val]
             chunks.lmbda_c_eq_chunks_val[nu_chunk_indx]                    = results.lmbda_c_eq_val[self.nu_chunks_indx_list[nu_chunk_indx]]
@@ -184,16 +217,8 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
             chunks.overline_epsilon_cnu_diss_hat_chunks_val[nu_chunk_indx] = results.overline_epsilon_cnu_diss_hat_val[self.nu_chunks_indx_list[nu_chunk_indx]]
             chunks.overline_epsilon_c_diss_hat_chunks_val[nu_chunk_indx]   = results.overline_epsilon_c_diss_hat_val[self.nu_chunks_indx_list[nu_chunk_indx]]
 
-        if self.deformation_type == 'uniaxial':
-            if self.incompressibility_assumption == 'incompressible':
-                sigma_11_val = results.sigma_hyp_val*(b_val[0][0] - b_val[1][1])
-            elif self.incompressibility_assumption == 'nearly_incompressible':
-                sigma_11_val = results.sigma_hyp_val*b_val[0][0] + self.K_G*( np.linalg.det(F_val) - 1. )
-            
-            chunks.sigma_11_chunks.append(sigma_11_val)
-        
-        elif self.deformation_type == 'equibiaxial': pass
-        elif self.deformation_type == 'simple_shear': pass
+        sigma_val = self.strong_form_calculate_sigma_func(results.sigma_hyp_val, deformation)
+        chunks    = self.strong_form_store_calculated_sigma_chunks(sigma_val, chunks)
 
         # first dimension is t_chunk_val: list[t_chunk_val]
         chunks.lmbda_c_chunks.append(results.lmbda_c_val)
@@ -241,16 +266,11 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
         fem.lmbda_c_max_prior = project(Constant(1.0), fem.V_scalar) # lambda_c = 1 at the initial reference configuration
 
         # Kinematics
-        fem.F     = fem.I + grad(fem.u) # deformation gradient tensor
-        fem.F_inv = inv(fem.F) # inverse deformation gradient tensor
-        fem.J     = det(fem.F) # volume ratio
-        fem.C     = fem.F.T*fem.F # right Cauchy-Green tensor
-        
-        if fem.dimension == 2:
-            fem.I_C = tr(fem.C)+1 # 2D form of the trace of right Cauchy-Green tensor, where F_33 = 1 always -- this is the case of plane strain
-        elif fem.dimension == 3:
-            fem.I_C = tr(fem.C) # 3D form of the trace of right Cauchy-Green tensor
-        
+        fem.F           = fem.I + grad(fem.u) # deformation gradient tensor
+        fem.F_inv       = inv(fem.F) # inverse deformation gradient tensor
+        fem.J           = det(fem.F) # volume ratio
+        fem.C           = fem.F.T*fem.F # right Cauchy-Green tensor
+        fem.I_C         = tr(fem.C)+1 # 2D plane strain form of the trace of right Cauchy-Green tensor, where F_33 = 1 always -- this is the case of plane strain
         fem.lmbda_c     = sqrt(fem.I_C/3.0)
         fem.lmbda_c_max = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max_prior), fem.lmbda_c, fem.lmbda_c_max_prior), fem.V_scalar)
 
@@ -292,13 +312,7 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
         chunks  = SimpleNamespace()
 
         # initialize lists to zeros - necessary for irreversibility
-        if self.deformation_type == 'uniaxial':
-            chunks.F_11_chunks         = []
-            chunks.F_11_chunks_val     = [0. for meshpoint_indx in range(len(gp.meshpoints))]
-            chunks.sigma_11_chunks     = []
-            chunks.sigma_11_chunks_val = [0. for meshpoint_indx in range(len(gp.meshpoints))]
-        elif self.deformation_type == 'equibiaxial': pass
-        elif self.deformation_type == 'simple_shear': pass
+        chunks = self.weak_form_initialize_deformation_sigma_chunks(gp.meshpoints, chunks)
         
         # lmbda_c
         chunks.lmbda_c_chunks     = []
@@ -351,7 +365,7 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
         return chunks
 
-    def fenics_weak_form_post_processing(self, deformation, chunks, fem, file_results, parameters):
+    def fenics_weak_form_chunk_post_processing(self, deformation, chunks, fem, file_results, parameters):
         """
         Post-processing at the end of each time iteration chunk
         """
@@ -375,13 +389,7 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
         
         if ppp.save_sigma_chunks:
             sigma_val = project(self.pk2_stress_ufl_func(fem)/fem.J*fem.F.T, fem.V_tensor)
-            if self.deformation_type == 'uniaxial':
-                for meshpoint_indx in range(len(gp.meshpoints)):
-                    chunks.sigma_11_chunks_val[meshpoint_indx] = sigma_val(gp.meshpoints[meshpoint_indx])[femp.tensor2vector_indx_dict["11"]]
-                chunks.sigma_11_chunks.append(deepcopy(chunks.sigma_11_chunks_val))
-            
-            elif self.deformation_type == 'equibiaxial': pass
-            elif self.deformation_type == 'simple_shear': pass
+            chunks    = self.weak_form_store_calculated_sigma_chunks(sigma_val, femp.tensor2vector_indx_dict, gp.meshpoints, chunks)
         
         # F
         if ppp.save_F_mesh:
@@ -390,14 +398,8 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
             file_results.write(F_val, deformation.t_val)
         
         if ppp.save_F_chunks:
-            F_val = project(fem.F, fem.V_tensor)
-            if self.deformation_type == 'uniaxial':
-                for meshpoint_indx in range(len(gp.meshpoints)):
-                    chunks.F_11_chunks_val[meshpoint_indx] = F_val(gp.meshpoints[meshpoint_indx])[femp.tensor2vector_indx_dict["11"]]
-                chunks.F_11_chunks.append(deepcopy(chunks.F_11_chunks_val))
-            
-            elif self.deformation_type == 'equibiaxial': pass
-            elif self.deformation_type == 'simple_shear': pass
+            F_val  = project(fem.F, fem.V_tensor)
+            chunks = self.weak_form_store_calculated_deformation_chunks(F_val, femp.tensor2vector_indx_dict, gp.meshpoints, chunks)
         
         # lmbda_c
         if ppp.save_lmbda_c_mesh:
@@ -592,7 +594,7 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
             lmbda_nu___nu_val       = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq___nu_val)
             lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
             # determine chain damage
-            upsilon_c___nu_val = self.single_chain_list[nu_indx].p_c_sur_hat_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+            upsilon_c___nu_val = self.single_chain_list[nu_indx].upsilon_c_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
             # determine stress response
             P__G_val += upsilon_c___nu_val*self.P_nu_list[nu_indx]*self.nu_list[nu_indx]*self.A_nu_list[nu_indx]*self.single_chain_list[nu_indx].xi_c_ufl_func(lmbda_nu___nu_val, lmbda_c_eq___nu_val)/(3.*fem.lmbda_c)*fem.F
         P__G_val += self.K_G*(fem.J-1)*fem.J*fem.F_inv.T
@@ -604,7 +606,7 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
             A_nu___nu_val           = self.single_chain_list[nu_indx].A_nu
             lmbda_c_eq_max___nu_val = fem.lmbda_c_max*A_nu___nu_val
             lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
-            upsilon_c___nu_val      = self.single_chain_list[nu_indx].p_c_sur_hat_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+            upsilon_c___nu_val      = self.single_chain_list[nu_indx].upsilon_c_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
             Upsilon_c_val           += self.P_nu_list[nu_indx]*upsilon_c___nu_val
         Upsilon_c_val = Upsilon_c_val/self.P_nu_sum
         return Upsilon_c_val
@@ -615,7 +617,7 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
             A_nu___nu_val           = self.single_chain_list[nu_indx].A_nu
             lmbda_c_eq_max___nu_val = fem.lmbda_c_max*A_nu___nu_val
             lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
-            d_c___nu_val            = self.single_chain_list[nu_indx].p_c_sci_hat_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+            d_c___nu_val            = self.single_chain_list[nu_indx].d_c_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
             D_c_val                 += self.P_nu_list[nu_indx]*d_c___nu_val
         D_c_val = D_c_val/self.P_nu_sum
         return D_c_val
@@ -641,57 +643,557 @@ class NonaffineEightChainModelEqualStrainRateIndependentNetwork:
         A_nu___nu_val           = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
         lmbda_c_eq_max___nu_val = fem.lmbda_c_max*A_nu___nu_val
         lmbda_nu_max___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
-        upsilon_c___nu_val      = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].p_c_sur_hat_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+        upsilon_c___nu_val      = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].upsilon_c_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
         return upsilon_c___nu_val
 
     def d_c_ufl_func(self, fem):
         A_nu___nu_val           = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
         lmbda_c_eq_max___nu_val = fem.lmbda_c_max*A_nu___nu_val
         lmbda_nu_max___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
-        d_c___nu_val            = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].p_c_sci_hat_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+        d_c___nu_val            = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].d_c_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
         return d_c___nu_val
 
-class NonaffineEightChainModelEqualStrainRateDependentNetwork:
+class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
     def __init__(self):
         pass
 
-class NonaffineEightChainModelEqualForceRateIndependentNetwork:
+class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
     def __init__(self):
         pass
 
-class NonaffineEightChainModelEqualForceRateDependentNetwork:
+class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
     def __init__(self):
         pass
 
-class NonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
+class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
     def __init__(self):
         pass
 
-class NonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
+class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
     def __init__(self):
         pass
 
-class AffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork:
+class TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
 
     def __init__(self):
         pass
 
-class AffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork:
+class TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
 
     def __init__(self):
         pass
 
-class AffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
+class TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
     def __init__(self):
         pass
 
-class AffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
+class TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalNearlyIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalNearlyIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalCompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalCompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
+
+    def __init__(self):
+        pass
+
+class ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
 
     def __init__(self):
         pass
@@ -701,17 +1203,72 @@ class AffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
 # Generalized extensible freely jointed chain (gen-uFJC) characterization class
 ################################################################################################################################
 
-class GeneralizeduFJCNetwork(NonaffineEightChainModelEqualStrainRateIndependentNetwork, NonaffineEightChainModelEqualStrainRateDependentNetwork,
-                                NonaffineEightChainModelEqualForceRateIndependentNetwork, NonaffineEightChainModelEqualForceRateDependentNetwork,
-                                NonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork, NonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork, 
-                                AffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork, AffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork,
-                                AffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork, AffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork):
+class GeneralizeduFJCNetwork(TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStressIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStressIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStressNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStressNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStressCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStressCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork, TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork,
+                                TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork, TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork,
+                                ThreeDimensionalIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, ThreeDimensionalIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                ThreeDimensionalIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, ThreeDimensionalIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                ThreeDimensionalIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork, ThreeDimensionalIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork,
+                                ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork, ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork,
+                                ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork, ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork,
+                                ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                ThreeDimensionalNearlyIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork, ThreeDimensionalNearlyIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork,
+                                ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork, ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork,
+                                ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork, ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork,
+                                ThreeDimensionalCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork, ThreeDimensionalCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork,
+                                ThreeDimensionalCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork, ThreeDimensionalCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork,
+                                ThreeDimensionalCompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork, ThreeDimensionalCompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork,
+                                ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork, ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork,
+                                ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork, ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork):
     
     ############################################################################################################################
     # Initialization
     ############################################################################################################################
     
-    def __init__(self, parameters):
+    def __init__(self, parameters, strong_form_initialize_sigma_chunks, lr_cg_deformation_gradient_func, strong_form_calculate_sigma_func, strong_form_store_calculated_sigma_chunks, weak_form_initialize_deformation_sigma_chunks, weak_form_store_calculated_sigma_chunks, weak_form_store_calculated_deformation_chunks):
 
         # Check the correctness of the specified parameters
         if hasattr(parameters, "material") == False or hasattr(parameters, "deformation") == False:
@@ -720,12 +1277,25 @@ class GeneralizeduFJCNetwork(NonaffineEightChainModelEqualStrainRateIndependentN
         mp = parameters.material
         dp = parameters.deformation
 
+        # Retain specified functions for deformation-specific calculations
+        self.strong_form_initialize_sigma_chunks           = strong_form_initialize_sigma_chunks
+        self.lr_cg_deformation_gradient_func               = lr_cg_deformation_gradient_func
+        self.strong_form_calculate_sigma_func              = strong_form_calculate_sigma_func
+        self.strong_form_store_calculated_sigma_chunks     = strong_form_store_calculated_sigma_chunks
+        self.weak_form_initialize_deformation_sigma_chunks = weak_form_initialize_deformation_sigma_chunks
+        self.weak_form_store_calculated_sigma_chunks       = weak_form_store_calculated_sigma_chunks
+        self.weak_form_store_calculated_deformation_chunks = weak_form_store_calculated_deformation_chunks
+
         # Retain specified parameters
-        self.chain_level_load_sharing           = getattr(mp, "chain_level_load_sharing")
-        self.micro2macro_homogenization_scheme  = getattr(mp, "micro2macro_homogenization_scheme")
-        self.macro2micro_deformation_assumption = getattr(mp, "macro2micro_deformation_assumption")
-        self.rate_dependence                    = getattr(mp, "rate_dependence")
+        self.network_model                      = getattr(mp, "network_model")
+        self.physical_dimension                 = getattr(mp, "physical_dimension")
         self.incompressibility_assumption       = getattr(mp, "incompressibility_assumption")
+        self.macro2micro_deformation_assumption = getattr(mp, "macro2micro_deformation_assumption")
+        self.micro2macro_homogenization_scheme  = getattr(mp, "micro2macro_homogenization_scheme")
+        self.chain_level_load_sharing           = getattr(mp, "chain_level_load_sharing")
+        self.rate_dependence                    = getattr(mp, "rate_dependence")
+        self.two_dimensional_formulation        = getattr(mp, "two_dimensional_formulation")
+        self.microdisk_quadrature_order         = getattr(mp, "microdisk_quadrature_order")
         self.microsphere_quadrature_order       = getattr(mp, "microsphere_quadrature_order")
 
         self.omega_0 = getattr(mp, "omega_0")
@@ -747,11 +1317,21 @@ class GeneralizeduFJCNetwork(NonaffineEightChainModelEqualStrainRateIndependentN
         self.epsilon                 = getattr(dp, "epsilon")
         self.max_J_val_cond          = getattr(dp, "max_J_val_cond")
 
+
+        if self.network_model != "statistical_mechanics_model":
+            sys.exit("Error: This GeneralizeduFJCNetwork material class corresponds to a statistical mechanics model.")
+        
+        if self.physical_dimension != 2 and self.physical_dimension != 3:
+            sys.exit("Error: Need to specify either a 2D or a 3D problem.")
+        
+        if self.incompressibility_assumption != "incompressible" and self.incompressibility_assumption != "nearly_incompressible" and self.incompressibility_assumption != "compressible":
+            sys.exit("Error: Need to specify a proper incompressibility assumption for the material. The material is either incompressible, nearly incompressible, or compressible>")
+
         if self.macro2micro_deformation_assumption != 'affine' and self.macro2micro_deformation_assumption != 'nonaffine':
             sys.exit('Error: Need to specify the macro-to-micro deformation assumption in the network. Either affine deformation or non-affine deformation can be used.')
         
-        if self.micro2macro_homogenization_scheme != 'full_network_microsphere_model' and self.micro2macro_homogenization_scheme != 'eight_chain_model':
-            sys.exit('Error: Need to specify the micro-to-macro homogenization scheme in the network. Either the full network microsphere model or the eight chain model can be used.')
+        if self.micro2macro_homogenization_scheme != 'eight_chain_model' and self.micro2macro_homogenization_scheme != 'full_network_microdisk_model' and self.micro2macro_homogenization_scheme != 'full_network_microsphere_model':
+            sys.exit('Error: Need to specify the micro-to-macro homogenization scheme in the network. Either the eight chain model, the full network microdisk micro-to-macro homogenization scheme, or the full network microdisk micro-to-macro homogenization scheme can be used.')
         
         if self.chain_level_load_sharing != 'equal_strain' and self.chain_level_load_sharing != 'equal_force':
             sys.exit('Error: Need to specify the load sharing assumption that the network/chains in the generalized uFJC network obey. Either the equal strain chain level load sharing assumption or the equal force chain level load sharing assumption can be used.')
@@ -759,65 +1339,473 @@ class GeneralizeduFJCNetwork(NonaffineEightChainModelEqualStrainRateIndependentN
         if self.rate_dependence != 'rate_dependent' and self.rate_dependence != 'rate_independent':
             sys.exit('Error: Need to specify the network/chain dependence on the rate of applied deformation. Either rate-dependent or rate-independent deformation can be used.')
         
-        if self.deformation_type != 'uniaxial' and self.deformation_type != 'equibiaxial' and self.deformation_type != 'simple_shear':
-            sys.exit('Error: Need to specify the canonical applied deformation behavior to the network. Either uniaxial, equibiaxial, or simple shear applied deformation can be used.')
-        
         if self.rate_dependence == 'rate_dependent' and self.omega_0 is None:
             sys.exit('Error: Need to specify the microscopic frequency of segments in the network for rate-dependent network deformation.')
         
-        if self.macro2micro_deformation_assumption == 'nonaffine' and self.micro2macro_homogenization_scheme == 'full_network_microsphere_model' and self.chain_level_load_sharing == 'equal_strain':
-            sys.exit('Error: In the non-affine macro-to-micro deformation assumption utilizing the full network microsphere micro-to-macro homogenization scheme, the generalized uFJCs are required to obey the equal force load sharing assumption.')
-        
         if self.macro2micro_deformation_assumption == 'affine' and self.micro2macro_homogenization_scheme == 'eight_chain_model':
             sys.exit('Error: The eight chain micro-to-macro homogenization scheme technically exhibits the non-affine macro-to-micro deformation assumption.')
-
-        # Specify full network microsphere quadrature order, if necessary
-        if self.micro2macro_homogenization_scheme == 'full_network_microsphere_model':
-            if self.microsphere_quadrature_order is None:
-                sys.exit('Error: Need to specify microsphere quadrature order number in order to utilize the full network microsphere micro-to-macro homogenization scheme.')
-            else:
-                self.microsphere = MicrosphereQuadratureScheme(self.microsphere_quadrature_order)
+        
+        if self.macro2micro_deformation_assumption == 'nonaffine' and (self.micro2macro_homogenization_scheme == 'full_network_microsphere_model' or self.micro2macro_homogenization_scheme == 'full_network_microdisk_model') and self.chain_level_load_sharing == 'equal_strain':
+            sys.exit('Error: In the non-affine macro-to-micro deformation assumption utilizing either the full network microsphere micro-to-macro homogenization scheme or the full network microdisk micro-to-macro homogenization scheme, the generalized uFJCs are required to obey the equal force load sharing assumption.')
+        
+        if self.physical_dimension == 2:
+            if self.two_dimensional_formulation != "plane_strain" and self.two_dimensional_formulation != "generalized_plane_strain" and self.two_dimensional_formulation != "plane_stress":
+                sys.exit("Error: Need to specify a proper two-dimensional formulation. Either plane strain, generalized plane strain, or plane stress can be used.")
+            
+            if self.micro2macro_homogenization_scheme == 'full_network_microsphere_model':
+                sys.exit("Error: For a 2D problem, the full network microsphere micro-to-macro homogenization scheme cannot be used. Either the eight chain model or the full network microdisk micro-to-macro homogenization scheme can be used for 2D problems.")
+            
+            # Specify full network microdisk quadrature scheme, if necessary
+            elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                if self.microdisk_quadrature_order is None:
+                    sys.exit('Error: Need to specify microdisk quadrature order number in order to utilize the full network microdisk micro-to-macro homogenization scheme.')
+                else:
+                    self.microdisk = MicrodiskQuadratureScheme(self.microdisk_quadrature_order)
+        
+        elif self.physical_dimension == 3:
+            if self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                sys.exit("Error: For a 2D problem, the full network microdisk micro-to-macro homogenization scheme cannot be used. Either the eight chain model or the full network microsphere micro-to-macro homogenization scheme can be used for 2D problems.")
+            
+            # Specify full network microsphere quadrature scheme, if necessary
+            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model':
+                if self.microsphere_quadrature_order is None:
+                    sys.exit('Error: Need to specify microsphere quadrature order number in order to utilize the full network microsphere micro-to-macro homogenization scheme.')
+                else:
+                    self.microsphere = MicrosphereQuadratureScheme(self.microsphere_quadrature_order)
+        
         
         # Specify chain composition
         if self.chain_level_load_sharing == 'equal_strain': self.equal_strain_generalized_ufjc_network(mp)
         
         elif self.chain_level_load_sharing == 'equal_force': self.equal_force_generalized_ufjc_network(mp)
         
-        # Specify network. Do not change these conditional statements!!
-        if self.macro2micro_deformation_assumption == 'nonaffine':
-            if self.micro2macro_homogenization_scheme == 'eight_chain_model':
-                if self.chain_level_load_sharing == 'equal_strain':
-                    if self.rate_dependence == 'rate_independent':
-                        NonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
-                    elif self.rate_dependence == 'rate_dependent':
-                        NonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
-                elif self.chain_level_load_sharing == 'equal_force':
-                    if self.rate_dependence == 'rate_independent':
-                        NonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
-                    elif self.rate_dependence == 'rate_dependent':
-                        NonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
-            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model':
-                if self.chain_level_load_sharing == 'equal_strain':
-                    if self.rate_dependence == 'rate_independent': pass
-                    elif self.rate_dependence == 'rate_dependent': pass
-                elif self.chain_level_load_sharing == 'equal_force':
-                    if self.rate_dependence == 'rate_independent':
-                        NonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork.__init__(self)
-                    elif self.rate_dependence == 'rate_dependent':
-                        NonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork.__init__(self)
-        elif self.macro2micro_deformation_assumption == 'nonaffine':
-            if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
-            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model':
-                if self.chain_level_load_sharing == 'equal_strain':
-                    if self.rate_dependence == 'rate_independent': 
-                        AffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork.__init__(self)
-                    elif self.rate_dependence == 'rate_dependent':
-                        AffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork.__init__(self)
-                elif self.chain_level_load_sharing == 'equal_force':
-                    if self.rate_dependence == 'rate_independent':
-                        AffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork.__init__(self)
-                    elif self.rate_dependence == 'rate_dependent':
-                        AffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork.__init__(self)
+
+        # Specify network. DO NOT CHANGE THESE CONDITIONAL STATEMENTS WHATSOEVER!!
+        if self.physical_dimension == 2:
+            if self.two_dimensional_formulation == "plane_strain":
+                if self.incompressibility_assumption == "incompressible":
+                    if self.macro2micro_deformation_assumption == 'nonaffine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain': pass
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                    elif self.macro2micro_deformation_assumption == 'affine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent': 
+                                    TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                elif self.incompressibility_assumption == "nearly_incompressible":
+                    if self.macro2micro_deformation_assumption == 'nonaffine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain': pass
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                    elif self.macro2micro_deformation_assumption == 'affine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent': 
+                                    TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                elif self.incompressibility_assumption == "compressible":
+                    if self.macro2micro_deformation_assumption == 'nonaffine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain': pass
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                    elif self.macro2micro_deformation_assumption == 'affine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent': 
+                                    TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+            elif self.two_dimensional_formulation == "generalized_plane_strain":
+                if self.incompressibility_assumption == "incompressible":
+                    if self.macro2micro_deformation_assumption == 'nonaffine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain': pass
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                    elif self.macro2micro_deformation_assumption == 'affine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent': 
+                                    TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                elif self.incompressibility_assumption == "nearly_incompressible":
+                    if self.macro2micro_deformation_assumption == 'nonaffine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain': pass
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                    elif self.macro2micro_deformation_assumption == 'affine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent': 
+                                    TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                elif self.incompressibility_assumption == "compressible":
+                    if self.macro2micro_deformation_assumption == 'nonaffine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain': pass
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                    elif self.macro2micro_deformation_assumption == 'affine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent': 
+                                    TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+            elif self.two_dimensional_formulation == "plane_stress":
+                if self.incompressibility_assumption == "incompressible":
+                    if self.macro2micro_deformation_assumption == 'nonaffine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain': pass
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                    elif self.macro2micro_deformation_assumption == 'affine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent': 
+                                    TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                elif self.incompressibility_assumption == "nearly_incompressible":
+                    if self.macro2micro_deformation_assumption == 'nonaffine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain': pass
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                    elif self.macro2micro_deformation_assumption == 'affine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent': 
+                                    TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                elif self.incompressibility_assumption == "compressible":
+                    if self.macro2micro_deformation_assumption == 'nonaffine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain': pass
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+                    elif self.macro2micro_deformation_assumption == 'affine':
+                        if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                        elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
+                            if self.chain_level_load_sharing == 'equal_strain':
+                                if self.rate_dependence == 'rate_independent': 
+                                    TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork.__init__(self)
+                            elif self.chain_level_load_sharing == 'equal_force':
+                                if self.rate_dependence == 'rate_independent':
+                                    TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork.__init__(self)
+                                elif self.rate_dependence == 'rate_dependent':
+                                    TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork.__init__(self)
+                            elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model': pass
+        elif self.physical_dimension == 3:
+            if self.incompressibility_assumption == "incompressible":
+                if self.macro2micro_deformation_assumption == 'nonaffine':
+                    if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                        if self.chain_level_load_sharing == 'equal_strain':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                        elif self.chain_level_load_sharing == 'equal_force':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model':
+                        if self.chain_level_load_sharing == 'equal_strain': pass
+                        elif self.chain_level_load_sharing == 'equal_force':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork.__init__(self)
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model': pass
+                elif self.macro2micro_deformation_assumption == 'affine':
+                    if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model':
+                        if self.chain_level_load_sharing == 'equal_strain':
+                            if self.rate_dependence == 'rate_independent': 
+                                ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork.__init__(self)
+                        elif self.chain_level_load_sharing == 'equal_force':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork.__init__(self)
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model': pass
+            elif self.incompressibility_assumption == "nearly_incompressible":
+                if self.macro2micro_deformation_assumption == 'nonaffine':
+                    if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                        if self.chain_level_load_sharing == 'equal_strain':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                        elif self.chain_level_load_sharing == 'equal_force':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model':
+                        if self.chain_level_load_sharing == 'equal_strain': pass
+                        elif self.chain_level_load_sharing == 'equal_force':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalNearlyIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalNearlyIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork.__init__(self)
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model': pass
+                elif self.macro2micro_deformation_assumption == 'affine':
+                    if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model':
+                        if self.chain_level_load_sharing == 'equal_strain':
+                            if self.rate_dependence == 'rate_independent': 
+                                ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork.__init__(self)
+                        elif self.chain_level_load_sharing == 'equal_force':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork.__init__(self)
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model': pass
+            elif self.incompressibility_assumption == "compressible":
+                if self.macro2micro_deformation_assumption == 'nonaffine':
+                    if self.micro2macro_homogenization_scheme == 'eight_chain_model':
+                        if self.chain_level_load_sharing == 'equal_strain':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork.__init__(self)
+                        elif self.chain_level_load_sharing == 'equal_force':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork.__init__(self)
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model':
+                        if self.chain_level_load_sharing == 'equal_strain': pass
+                        elif self.chain_level_load_sharing == 'equal_force':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalCompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalCompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork.__init__(self)
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model': pass
+                elif self.macro2micro_deformation_assumption == 'affine':
+                    if self.micro2macro_homogenization_scheme == 'eight_chain_model': pass
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microsphere_model':
+                        if self.chain_level_load_sharing == 'equal_strain':
+                            if self.rate_dependence == 'rate_independent': 
+                                ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork.__init__(self)
+                        elif self.chain_level_load_sharing == 'equal_force':
+                            if self.rate_dependence == 'rate_independent':
+                                ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork.__init__(self)
+                            elif self.rate_dependence == 'rate_dependent':
+                                ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork.__init__(self)
+                    elif self.micro2macro_homogenization_scheme == 'full_network_microdisk_model': pass
     
     def equal_strain_generalized_ufjc_network(self, material_parameters):
         
@@ -931,7 +1919,7 @@ class GeneralizeduFJCNetwork(NonaffineEightChainModelEqualStrainRateIndependentN
         self.epsilon_c_sci_hat_rms__Nu = epsilon_c_sci_hat_rms__Nu
         self.Lambda_b_ref              = Lambda_b_ref
 
-    
+
     def P_nu(self, material_parameters, nu):
         
         mp = material_parameters

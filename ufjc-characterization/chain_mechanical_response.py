@@ -36,14 +36,14 @@ class ChainMechanicalResponseCharacterizer(uFJCDiffuseChainScissionCharacterizer
         cp = self.parameters.characterizer
 
         # Evaluate zeta_nu_char
-        chain_mech_resp_zeta_nu_char_single_chain_list = [GeneralizeduFJC(rate_dependence = 'rate_independent', nu = cp.nu_single_chain_list[1], zeta_nu_char = cp.zeta_nu_char_single_chain_list[single_chain_num_indx], kappa_nu = cp.kappa_nu_single_chain_list[2]) for single_chain_num_indx in range(len(cp.zeta_nu_char_single_chain_list))] # nu=125, kappa_nu=1000
+        chain_mech_resp_zeta_nu_char_single_chain_list = [GeneralizeduFJC(rate_dependence = 'rate_independent', nu = cp.nu_single_chain_list[1], zeta_nu_char = cp.zeta_nu_char_single_chain_list[single_chain_indx], kappa_nu = cp.kappa_nu_single_chain_list[2]) for single_chain_indx in range(len(cp.zeta_nu_char_single_chain_list))] # nu=125, kappa_nu=1000
 
-        chain_mech_resp_zeta_nu_char_lmbda_c_eq___single_chain_chunk = [0. for single_chain_num_indx in range(len(chain_mech_resp_zeta_nu_char_single_chain_list))]
-        chain_mech_resp_zeta_nu_char_lmbda_nu___single_chain_chunk   = [0. for single_chain_num_indx in range(len(chain_mech_resp_zeta_nu_char_single_chain_list))]
-        chain_mech_resp_zeta_nu_char_xi_c_exact___single_chain_chunk = [0. for single_chain_num_indx in range(len(chain_mech_resp_zeta_nu_char_single_chain_list))]
+        chain_mech_resp_zeta_nu_char_lmbda_c_eq___single_chain_chunk = [0. for single_chain_indx in range(len(chain_mech_resp_zeta_nu_char_single_chain_list))]
+        chain_mech_resp_zeta_nu_char_lmbda_nu___single_chain_chunk   = [0. for single_chain_indx in range(len(chain_mech_resp_zeta_nu_char_single_chain_list))]
+        chain_mech_resp_zeta_nu_char_xi_c_exact___single_chain_chunk = [0. for single_chain_indx in range(len(chain_mech_resp_zeta_nu_char_single_chain_list))]
 
-        for single_chain_num_indx in range(len(chain_mech_resp_zeta_nu_char_single_chain_list)):
-            single_chain = chain_mech_resp_zeta_nu_char_single_chain_list[single_chain_num_indx]
+        for single_chain_indx in range(len(chain_mech_resp_zeta_nu_char_single_chain_list)):
+            single_chain = chain_mech_resp_zeta_nu_char_single_chain_list[single_chain_indx]
 
             # Define the values of the equilibrium chain stretch to calculate over
             lmbda_c_eq_steps = np.linspace(cp.lmbda_c_eq_min, single_chain.lmbda_c_eq_crit, cp.lmbda_c_eq_num_steps)
@@ -64,9 +64,9 @@ class ChainMechanicalResponseCharacterizer(uFJCDiffuseChainScissionCharacterizer
                 lmbda_nu.append(lmbda_nu_val)
                 xi_c_exact.append(xi_c_exact_val)
             
-            chain_mech_resp_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_num_indx] = lmbda_c_eq
-            chain_mech_resp_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_num_indx]   = lmbda_nu
-            chain_mech_resp_zeta_nu_char_xi_c_exact___single_chain_chunk[single_chain_num_indx] = xi_c_exact
+            chain_mech_resp_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_indx] = lmbda_c_eq
+            chain_mech_resp_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_indx]   = lmbda_nu
+            chain_mech_resp_zeta_nu_char_xi_c_exact___single_chain_chunk[single_chain_indx] = xi_c_exact
         
         self.chain_mech_resp_zeta_nu_char_single_chain_list = chain_mech_resp_zeta_nu_char_single_chain_list
         
@@ -75,14 +75,14 @@ class ChainMechanicalResponseCharacterizer(uFJCDiffuseChainScissionCharacterizer
         self.chain_mech_resp_zeta_nu_char_xi_c_exact___single_chain_chunk = chain_mech_resp_zeta_nu_char_xi_c_exact___single_chain_chunk
 
         # Evaluate kappa_nu
-        chain_mech_resp_kappa_nu_single_chain_list = [GeneralizeduFJC(rate_dependence = 'rate_independent', nu = cp.nu_single_chain_list[1], zeta_nu_char = cp.zeta_nu_char_single_chain_list[2], kappa_nu = cp.kappa_nu_single_chain_list[single_chain_num_indx]) for single_chain_num_indx in range(len(cp.kappa_nu_single_chain_list))] # nu=125, kappa_nu=1000
+        chain_mech_resp_kappa_nu_single_chain_list = [GeneralizeduFJC(rate_dependence = 'rate_independent', nu = cp.nu_single_chain_list[1], zeta_nu_char = cp.zeta_nu_char_single_chain_list[2], kappa_nu = cp.kappa_nu_single_chain_list[single_chain_indx]) for single_chain_indx in range(len(cp.kappa_nu_single_chain_list))] # nu=125, zeta_nu_char=1000
 
-        chain_mech_resp_kappa_nu_lmbda_c_eq___single_chain_chunk = [0. for single_chain_num_indx in range(len(chain_mech_resp_kappa_nu_single_chain_list))]
-        chain_mech_resp_kappa_nu_lmbda_nu___single_chain_chunk   = [0. for single_chain_num_indx in range(len(chain_mech_resp_kappa_nu_single_chain_list))]
-        chain_mech_resp_kappa_nu_xi_c_exact___single_chain_chunk = [0. for single_chain_num_indx in range(len(chain_mech_resp_kappa_nu_single_chain_list))]
+        chain_mech_resp_kappa_nu_lmbda_c_eq___single_chain_chunk = [0. for single_chain_indx in range(len(chain_mech_resp_kappa_nu_single_chain_list))]
+        chain_mech_resp_kappa_nu_lmbda_nu___single_chain_chunk   = [0. for single_chain_indx in range(len(chain_mech_resp_kappa_nu_single_chain_list))]
+        chain_mech_resp_kappa_nu_xi_c_exact___single_chain_chunk = [0. for single_chain_indx in range(len(chain_mech_resp_kappa_nu_single_chain_list))]
 
-        for single_chain_num_indx in range(len(chain_mech_resp_kappa_nu_single_chain_list)):
-            single_chain = chain_mech_resp_kappa_nu_single_chain_list[single_chain_num_indx]
+        for single_chain_indx in range(len(chain_mech_resp_kappa_nu_single_chain_list)):
+            single_chain = chain_mech_resp_kappa_nu_single_chain_list[single_chain_indx]
 
             # Define the values of the equilibrium chain stretch to calculate over
             lmbda_c_eq_steps = np.linspace(cp.lmbda_c_eq_min, single_chain.lmbda_c_eq_crit, cp.lmbda_c_eq_num_steps)
@@ -103,9 +103,9 @@ class ChainMechanicalResponseCharacterizer(uFJCDiffuseChainScissionCharacterizer
                 lmbda_nu.append(lmbda_nu_val)
                 xi_c_exact.append(xi_c_exact_val)
             
-            chain_mech_resp_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_num_indx] = lmbda_c_eq
-            chain_mech_resp_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_num_indx]   = lmbda_nu
-            chain_mech_resp_kappa_nu_xi_c_exact___single_chain_chunk[single_chain_num_indx] = xi_c_exact
+            chain_mech_resp_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_indx] = lmbda_c_eq
+            chain_mech_resp_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_indx]   = lmbda_nu
+            chain_mech_resp_kappa_nu_xi_c_exact___single_chain_chunk[single_chain_indx] = xi_c_exact
         
         self.chain_mech_resp_kappa_nu_single_chain_list = chain_mech_resp_kappa_nu_single_chain_list
         
@@ -125,15 +125,15 @@ class ChainMechanicalResponseCharacterizer(uFJCDiffuseChainScissionCharacterizer
         
         # retrieve and plot results
         fig, (ax1, ax2) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
-        for single_chain_num_indx in range(len(self.chain_mech_resp_zeta_nu_char_single_chain_list)):
-            lmbda_c_eq     = self.chain_mech_resp_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu       = self.chain_mech_resp_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_num_indx]
-            xi_c_exact     = self.chain_mech_resp_zeta_nu_char_xi_c_exact___single_chain_chunk[single_chain_num_indx]
+        for single_chain_indx in range(len(self.chain_mech_resp_zeta_nu_char_single_chain_list)):
+            lmbda_c_eq     = self.chain_mech_resp_zeta_nu_char_lmbda_c_eq___single_chain_chunk[single_chain_indx]
+            lmbda_nu       = self.chain_mech_resp_zeta_nu_char_lmbda_nu___single_chain_chunk[single_chain_indx]
+            xi_c_exact     = self.chain_mech_resp_zeta_nu_char_xi_c_exact___single_chain_chunk[single_chain_indx]
             lmbda_c_eq_max = max([lmbda_c_eq_max, lmbda_c_eq[-1]])
-            ax1.semilogy(lmbda_c_eq, xi_c_exact, linestyle='-', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5, label=cp.zeta_nu_char_label_single_chain_list[single_chain_num_indx])
-            ax1.plot(lmbda_c_eq[-1], xi_c_exact[-1], marker='x', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5)
-            ax2.plot(lmbda_c_eq, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5)
-            ax2.plot(lmbda_c_eq[-1], lmbda_nu[-1], marker='x', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5)
+            ax1.semilogy(lmbda_c_eq, xi_c_exact, linestyle='-', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5, label=cp.zeta_nu_char_label_single_chain_list[single_chain_indx])
+            ax1.plot(lmbda_c_eq[-1], xi_c_exact[-1], marker='x', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5)
+            ax2.plot(lmbda_c_eq, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5)
+            ax2.plot(lmbda_c_eq[-1], lmbda_nu[-1], marker='x', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5)
         
         ax1.legend(loc='best')
         ax1.set_ylim([1e-2, 1e4])
@@ -150,15 +150,15 @@ class ChainMechanicalResponseCharacterizer(uFJCDiffuseChainScissionCharacterizer
         
         # retrieve and plot results
         fig, (ax1, ax2) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
-        for single_chain_num_indx in range(len(self.chain_mech_resp_kappa_nu_single_chain_list)):
-            lmbda_c_eq     = self.chain_mech_resp_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_num_indx]
-            lmbda_nu       = self.chain_mech_resp_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_num_indx]
-            xi_c_exact     = self.chain_mech_resp_kappa_nu_xi_c_exact___single_chain_chunk[single_chain_num_indx]
+        for single_chain_indx in range(len(self.chain_mech_resp_kappa_nu_single_chain_list)):
+            lmbda_c_eq     = self.chain_mech_resp_kappa_nu_lmbda_c_eq___single_chain_chunk[single_chain_indx]
+            lmbda_nu       = self.chain_mech_resp_kappa_nu_lmbda_nu___single_chain_chunk[single_chain_indx]
+            xi_c_exact     = self.chain_mech_resp_kappa_nu_xi_c_exact___single_chain_chunk[single_chain_indx]
             lmbda_c_eq_max = max([lmbda_c_eq_max, lmbda_c_eq[-1]])
-            ax1.semilogy(lmbda_c_eq, xi_c_exact, linestyle='-', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5, label=cp.kappa_nu_label_single_chain_list[single_chain_num_indx])
-            ax1.plot(lmbda_c_eq[-1], xi_c_exact[-1], marker='x', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5)
-            ax2.plot(lmbda_c_eq, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5)
-            ax2.plot(lmbda_c_eq[-1], lmbda_nu[-1], marker='x', color=cp.color_list[single_chain_num_indx], alpha=1, linewidth=2.5)
+            ax1.semilogy(lmbda_c_eq, xi_c_exact, linestyle='-', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5, label=cp.kappa_nu_label_single_chain_list[single_chain_indx])
+            ax1.plot(lmbda_c_eq[-1], xi_c_exact[-1], marker='x', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5)
+            ax2.plot(lmbda_c_eq, lmbda_nu, linestyle='-', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5)
+            ax2.plot(lmbda_c_eq[-1], lmbda_nu[-1], marker='x', color=cp.color_list[single_chain_indx], alpha=1, linewidth=2.5)
         
         ax1.legend(loc='best')
         ax1.set_ylim([1e-2, 1e4])

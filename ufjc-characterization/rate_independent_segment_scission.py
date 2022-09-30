@@ -62,9 +62,9 @@ class RateIndependentSegmentScissionCharacterizer(uFJCDiffuseChainScissionCharac
             p_nu_sur_hat.append(p_nu_sur_hat_val)
             epsilon_nu_diss_hat.append(epsilon_nu_diss_hat_val)
         
-        overline_e_nu_sci_hat        = [x/single_chain.zeta_nu_char for x in e_nu_sci_hat]
-        overline_epsilon_nu_sci_hat  = [x/single_chain.zeta_nu_char for x in epsilon_nu_sci_hat]
-        overline_epsilon_nu_diss_hat = [x/single_chain.zeta_nu_char for x in epsilon_nu_diss_hat]
+        overline_e_nu_sci_hat        = [e_nu_sci_hat_val/single_chain.zeta_nu_char for e_nu_sci_hat_val in e_nu_sci_hat]
+        overline_epsilon_nu_sci_hat  = [epsilon_nu_sci_hat_val/single_chain.zeta_nu_char for epsilon_nu_sci_hat_val in epsilon_nu_sci_hat]
+        overline_epsilon_nu_diss_hat = [epsilon_nu_diss_hat_val/single_chain.zeta_nu_char for epsilon_nu_diss_hat_val in epsilon_nu_diss_hat]
         
         self.single_chain = single_chain
         
