@@ -245,6 +245,7 @@ def default_deformation_parameters():
     tol_Gamma_val_stag_NR   = 1e-2
     epsilon                 = 1e-12
     max_J_val_cond          = 1e12
+    k_cond_val              = 1e-8
 
     deformation.K_G                     = K_G
     deformation.lmbda_damping_init      = lmbda_damping_init
@@ -258,6 +259,7 @@ def default_deformation_parameters():
     deformation.tol_Gamma_val_stag_NR   = tol_Gamma_val_stag_NR
     deformation.epsilon                 = epsilon
     deformation.max_J_val_cond          = max_J_val_cond
+    deformation.k_cond_val              = k_cond_val
 
     # timing parameters
     t_min = 0.  # sec

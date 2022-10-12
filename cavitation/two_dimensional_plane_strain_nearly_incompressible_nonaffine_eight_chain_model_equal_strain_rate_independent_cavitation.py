@@ -5,6 +5,7 @@ from ufjc_diffuse_chain_scission import uFJCDiffuseChainScissionProblem, General
 import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
+import textwrap
 
 # Problem
 class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentCavitation(uFJCDiffuseChainScissionProblem):
@@ -77,10 +78,13 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         p.material.nu_chunks_label_list = nu_chunks_label_list
         p.material.nu_chunks_color_list = nu_chunks_color_list
 
+        k_cond_val = 0.1
+
         # Parameters used in F_func
         r_strain_rate = 0.0025 # 1/sec
-        t_max = 100 # sec
+        t_max         = 110 # sec
 
+        p.deformation.k_cond_val       = k_cond_val
         p.deformation.deformation_type = "cavitation"
         p.deformation.r_strain_rate    = r_strain_rate
         p.deformation.t_max            = t_max
@@ -145,6 +149,8 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
             Plane Surface(32) = {-21, -22};
             Mesh.MshFileVersion = 2.0;
             """ % (self.near_cavity_elem_size, self.far_cavity_elem_size, self.r_cavity, self.L, self.H)
+        
+        geofile = textwrap.dedent(geofile)
 
         L_string              = "{:.1f}".format(self.L)
         H_string              = "{:.1f}".format(self.H)

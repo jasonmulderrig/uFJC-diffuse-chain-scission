@@ -14,13 +14,11 @@ from copy import deepcopy
 
 class TwoDimensionalPlaneStrainIncompressibleNeoHookeanRateIndependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainIncompressibleNeoHookeanRateDependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleNeoHookeanRateIndependentNetwork:
 
@@ -145,108 +143,87 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNeoHookeanRateIndependentNetw
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleNeoHookeanRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleNeoHookeanRateIndependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleNeoHookeanRateDependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleNeoHookeanRateIndependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleNeoHookeanRateDependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNeoHookeanRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNeoHookeanRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleNeoHookeanRateIndependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleNeoHookeanRateDependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleNeoHookeanRateIndependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleNeoHookeanRateDependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleNeoHookeanRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleNeoHookeanRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleNeoHookeanRateIndependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleNeoHookeanRateDependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleNeoHookeanRateIndependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleNeoHookeanRateDependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleNeoHookeanRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleNeoHookeanRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleNeoHookeanRateIndependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleNeoHookeanRateDependentNetwork:
     
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 
 class PhenomenologicalNetwork(TwoDimensionalPlaneStrainIncompressibleNeoHookeanRateIndependentNetwork, TwoDimensionalPlaneStrainIncompressibleNeoHookeanRateDependentNetwork,

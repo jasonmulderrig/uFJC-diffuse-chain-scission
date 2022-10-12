@@ -327,11 +327,11 @@ class GeneralizeduFJC:
     def p_c_sci_hat_func(self, lmbda_nu_hat):
         return 1. - self.p_c_sur_hat_func(lmbda_nu_hat)
     
-    def upsilon_c_func(self, lmbda_nu_hat):
-        return (1.-cond_val)*self.p_c_sur_hat_func(lmbda_nu_hat) + cond_val
+    def upsilon_c_func(self, k_cond_val, lmbda_nu_hat):
+        return (1.-k_cond_val)*self.p_c_sur_hat_func(lmbda_nu_hat) + k_cond_val
 
-    def d_c_func(self, lmbda_nu_hat):
-        return 1. - self.upsilon_c_func(lmbda_nu_hat)
+    def d_c_func(self, k_cond_val, lmbda_nu_hat):
+        return 1. - self.upsilon_c_func(k_cond_val, lmbda_nu_hat)
     
     # Nondimensional chain scission energy
     def epsilon_cnu_sci_hat_func(self, lmbda_nu_hat):
@@ -667,11 +667,11 @@ class GeneralizeduFJC:
     def p_c_sci_hat_ufl_func(self, lmbda_nu_hat, lmbda_c_eq_hat):
         return 1. - self.p_c_sur_hat_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat)
     
-    def upsilon_c_ufl_func(self, lmbda_nu_hat, lmbda_c_eq_hat):
-        return (1.-cond_val)*self.p_c_sur_hat_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat) + cond_val
+    def upsilon_c_ufl_func(self, k_cond_val, lmbda_nu_hat, lmbda_c_eq_hat):
+        return (1.-k_cond_val)*self.p_c_sur_hat_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat) + k_cond_val
 
-    def d_c_ufl_func(self, lmbda_nu_hat, lmbda_c_eq_hat):
-        return 1. - self.upsilon_c_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat)
+    def d_c_ufl_func(self, k_cond_val, lmbda_nu_hat, lmbda_c_eq_hat):
+        return 1. - self.upsilon_c_ufl_func(k_cond_val, lmbda_nu_hat, lmbda_c_eq_hat)
     
     # # Nondimensional chain scission energy
     # def epsilon_cnu_sci_hat_func(self, lmbda_nu_hat):

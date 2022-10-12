@@ -19,58 +19,47 @@ max_exponent = np.log(sys.float_info.max)/np.log(10)
 
 class TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
     
     def homogeneous_strong_form_initialization(self):
         results = SimpleNamespace()
@@ -161,8 +150,8 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
             lmbda_nu___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_func(lmbda_c_eq___nu_val)
             # impose irreversibility
             lmbda_nu_max___nu_val                  = max([results.lmbda_nu_max_val[nu_indx], lmbda_nu___nu_val])
-            upsilon_c___nu_val                     = self.single_chain_list[nu_indx].upsilon_c_func(lmbda_nu_max___nu_val)
-            d_c___nu_val                           = self.single_chain_list[nu_indx].d_c_func(lmbda_nu_max___nu_val)
+            upsilon_c___nu_val                     = self.single_chain_list[nu_indx].upsilon_c_func(self.k_cond_val, lmbda_nu_max___nu_val)
+            d_c___nu_val                           = self.single_chain_list[nu_indx].d_c_func(self.k_cond_val, lmbda_nu_max___nu_val)
             epsilon_cnu_diss_hat___nu_val          = self.single_chain_list[nu_indx].epsilon_cnu_diss_hat_func(lmbda_nu_hat_max = lmbda_nu_max___nu_val, lmbda_nu_hat_val = lmbda_nu___nu_val, lmbda_nu_hat_val_prior = results.lmbda_nu_val[nu_indx], epsilon_cnu_diss_hat_val_prior = results.epsilon_cnu_diss_hat_val[nu_indx])
             epsilon_c_diss_hat___nu_val            = epsilon_cnu_diss_hat___nu_val*self.nu_list[nu_indx]
             overline_epsilon_cnu_diss_hat___nu_val = epsilon_cnu_diss_hat___nu_val/self.zeta_nu_char
@@ -585,7 +574,7 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         return chunks
 
     def pk2_stress_ufl_func(self, fem):
-        P__G_val = Constant(0.0)*fem.I
+        pk2_stress_val = Constant(0.0)*fem.I
         for nu_indx in range(self.nu_num):
             # determine equilibrium chain stretch and segement stretch
             A_nu___nu_val           = self.single_chain_list[nu_indx].A_nu
@@ -594,11 +583,11 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
             lmbda_nu___nu_val       = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq___nu_val)
             lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
             # determine chain damage
-            upsilon_c___nu_val = self.single_chain_list[nu_indx].upsilon_c_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+            upsilon_c___nu_val = self.single_chain_list[nu_indx].upsilon_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
             # determine stress response
-            P__G_val += upsilon_c___nu_val*self.P_nu_list[nu_indx]*self.nu_list[nu_indx]*self.A_nu_list[nu_indx]*self.single_chain_list[nu_indx].xi_c_ufl_func(lmbda_nu___nu_val, lmbda_c_eq___nu_val)/(3.*fem.lmbda_c)*fem.F
-        P__G_val += self.K_G*(fem.J-1)*fem.J*fem.F_inv.T
-        return P__G_val
+            pk2_stress_val += upsilon_c___nu_val*self.P_nu_list[nu_indx]*self.nu_list[nu_indx]*self.A_nu_list[nu_indx]*self.single_chain_list[nu_indx].xi_c_ufl_func(lmbda_nu___nu_val, lmbda_c_eq___nu_val)/(3.*fem.lmbda_c)*fem.F
+        pk2_stress_val += self.K_G*(fem.J-1)*fem.J*fem.F_inv.T
+        return pk2_stress_val
     
     def Upsilon_c_ufl_func(self, fem):
         Upsilon_c_val = Constant(0.0)
@@ -606,7 +595,7 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
             A_nu___nu_val           = self.single_chain_list[nu_indx].A_nu
             lmbda_c_eq_max___nu_val = fem.lmbda_c_max*A_nu___nu_val
             lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
-            upsilon_c___nu_val      = self.single_chain_list[nu_indx].upsilon_c_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+            upsilon_c___nu_val      = self.single_chain_list[nu_indx].upsilon_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
             Upsilon_c_val           += self.P_nu_list[nu_indx]*upsilon_c___nu_val
         Upsilon_c_val = Upsilon_c_val/self.P_nu_sum
         return Upsilon_c_val
@@ -617,7 +606,7 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
             A_nu___nu_val           = self.single_chain_list[nu_indx].A_nu
             lmbda_c_eq_max___nu_val = fem.lmbda_c_max*A_nu___nu_val
             lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
-            d_c___nu_val            = self.single_chain_list[nu_indx].d_c_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+            d_c___nu_val            = self.single_chain_list[nu_indx].d_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
             D_c_val                 += self.P_nu_list[nu_indx]*d_c___nu_val
         D_c_val = D_c_val/self.P_nu_sum
         return D_c_val
@@ -643,560 +632,451 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         A_nu___nu_val           = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
         lmbda_c_eq_max___nu_val = fem.lmbda_c_max*A_nu___nu_val
         lmbda_nu_max___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
-        upsilon_c___nu_val      = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].upsilon_c_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+        upsilon_c___nu_val      = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].upsilon_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
         return upsilon_c___nu_val
 
     def d_c_ufl_func(self, fem):
         A_nu___nu_val           = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
         lmbda_c_eq_max___nu_val = fem.lmbda_c_max*A_nu___nu_val
         lmbda_nu_max___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
-        d_c___nu_val            = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].d_c_ufl_func(lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+        d_c___nu_val            = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].d_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
         return d_c___nu_val
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalGeneralizedPlaneStrainCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressNearlyIncompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleNonaffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class TwoDimensionalPlaneStressCompressibleAffineFullNetworkMicrodiskModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalNearlyIncompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleNonaffineEightChainModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleNonaffineEightChainModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleNonaffineEightChainModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleNonaffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualStrainRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualStrainRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualForceRateIndependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 class ThreeDimensionalCompressibleAffineFullNetworkMicrosphereModelEqualForceRateDependentNetwork:
 
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
 
 ################################################################################################################################
@@ -1316,6 +1196,7 @@ class GeneralizeduFJCNetwork(TwoDimensionalPlaneStrainIncompressibleNonaffineEig
         self.tol_Gamma_val_stag_NR   = getattr(dp, "tol_Gamma_val_stag_NR")
         self.epsilon                 = getattr(dp, "epsilon")
         self.max_J_val_cond          = getattr(dp, "max_J_val_cond")
+        self.k_cond_val              = getattr(dp, "k_cond_val")
 
 
         if self.network_model != "statistical_mechanics_model":
@@ -1376,9 +1257,7 @@ class GeneralizeduFJCNetwork(TwoDimensionalPlaneStrainIncompressibleNonaffineEig
         
         # Specify chain composition
         if self.chain_level_load_sharing == 'equal_strain': self.equal_strain_generalized_ufjc_network(mp)
-        
         elif self.chain_level_load_sharing == 'equal_force': self.equal_force_generalized_ufjc_network(mp)
-        
 
         # Specify network. DO NOT CHANGE THESE CONDITIONAL STATEMENTS WHATSOEVER!!
         if self.physical_dimension == 2:
