@@ -16,7 +16,7 @@ import quadpy as qp
 # Full network microsphere quadrature class
 ################################################################################################################################
 
-class MicrodiskQuadratureScheme:
+class MicrodiskQuadratureScheme: # add functionality to access any disk quadrature scheme that quadpy offers
     
     ############################################################################################################################
     # Initialization

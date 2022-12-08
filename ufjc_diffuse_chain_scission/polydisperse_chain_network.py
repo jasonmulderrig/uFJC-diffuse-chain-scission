@@ -252,7 +252,8 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         fem.t = Constant((0.0, 0.0)) # Traction force on the boundary
 
         # Initialization
-        fem.lmbda_c_max_prior = project(Constant(1.0), fem.V_scalar) # lambda_c = 1 at the initial reference configuration
+        # fem.lmbda_c_max_prior = project(Constant(1.0), fem.V_scalar) # lambda_c = 1 at the initial reference configuration
+        fem.lmbda_c_max = project(Constant(1.0), fem.V_scalar) # lambda_c = 1 at the initial reference configuration
 
         # Kinematics
         fem.F           = fem.I + grad(fem.u) # deformation gradient tensor
@@ -261,7 +262,7 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         fem.C           = fem.F.T*fem.F # right Cauchy-Green tensor
         fem.I_C         = tr(fem.C)+1 # 2D plane strain form of the trace of right Cauchy-Green tensor, where F_33 = 1 always -- this is the case of plane strain
         fem.lmbda_c     = sqrt(fem.I_C/3.0)
-        fem.lmbda_c_max = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max_prior), fem.lmbda_c, fem.lmbda_c_max_prior), fem.V_scalar)
+        # fem.lmbda_c_max = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max_prior), fem.lmbda_c, fem.lmbda_c_max_prior), fem.V_scalar)
 
         # Calculate the work function using the weak form; specify the quadrature degree for efficiency pk2_stress_ufl_func
         fem.WF = (inner(self.pk2_stress_ufl_func(fem), grad(fem.v_u)))*dx(metadata=femp.metadata) - dot(fem.b, fem.v_u)*dx(metadata=femp.metadata) - dot(fem.t, fem.v_u)*ds
@@ -284,19 +285,122 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
 
         return fem
     
+    # def fenics_weak_form_solve_step(self, fem):
+    #     """
+    #     Solve the weak form, which will provide the solution to the displacements and diffuse chain damage, and account for network irreversibility
+    #     """
+    #     fem = self.solve_u(fem)
+
+    #     # Account for network irreversibility
+    #     # lmbda_c_max_check = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max), fem.lmbda_c, fem.lmbda_c_max), fem.V_scalar)
+    #     # fem.lmbda_c_max.assign(lmbda_c_max_check)
+    #     fem.lmbda_c_max = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max), fem.lmbda_c, fem.lmbda_c_max), fem.V_scalar)
+
+    #     return fem
+
+    # def fenics_weak_form_solve_step(self, fem):
+    #     """
+    #     Solve the weak form, which will provide the solution to the displacements and diffuse chain damage, and account for network irreversibility
+    #     """
+    #     fem = self.solve_u(fem)
+
+    #     # Account for network irreversibility
+    #     lmbda_c_max_prior_check = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max_prior), fem.lmbda_c, fem.lmbda_c_max_prior), fem.V_scalar)
+    #     fem.lmbda_c_max_prior.assign(lmbda_c_max_prior_check)
+
+    #     return fem
+
     def fenics_weak_form_solve_step(self, fem):
         """
         Solve the weak form, which will provide the solution to the displacements and diffuse chain damage, and account for network irreversibility
+        Use a staggered solution scheme to solve for the displacements and diffuse chain damage
         """
-        fem = self.solve_u(fem)
+        # Implement the staggered solution scheme to solve for the displacements and diffuse chain damage
+        iter_sss = 1
+        error_d_c = 1.
 
-        # Account for network irreversibility
-        fem.lmbda_c_max = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max_prior), fem.lmbda_c, fem.lmbda_c_max_prior), fem.V_scalar)
-        fem.lmbda_c_max_prior.assign(fem.lmbda_c_max)
+        while iter_sss < self.iter_max_d_c_val and error_d_c > self.tol_d_c_val:
+            error_d_c = 0.
+            # solve for the displacements while holding diffuse chain damage fixed at the prior calculated value
+            # lmbda_c_max is the proxy for fixed prior calculated diffuse chain damage
+            fem = self.solve_u(fem)
 
+            # Account for network irreversibility
+            # lmbda_c_max_solve proxy for calculated diffuse chain damage
+            lmbda_c_max_prior = project(fem.lmbda_c_max, fem.V_scalar)
+            lmbda_c_max_solve = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max), fem.lmbda_c, fem.lmbda_c_max), fem.V_scalar)
+
+            # Calculate error in diffuse chain damage for each chain segment number
+            for nu_indx in range(self.nu_num):
+                # Error in diffuse chain damage from the prior calculated value
+                fem.lmbda_c_max = lmbda_c_max_prior # fem.lmbda_c_max.assign(lmbda_c_max_prior)
+                d_c_val_prior = project(self.d_c_ufl_func(nu_indx, fem), fem.V_scalar)
+                
+                # Error in diffuse chain damage from the currently solved calculated value
+                # Accounts for network irreversibility
+                fem.lmbda_c_max = lmbda_c_max_solve # fem.lmbda_c_max.assign(lmbda_c_max_solve)
+                d_c_val_solve = project(self.d_c_ufl_func(nu_indx, fem), fem.V_scalar)
+                
+                # Overall error in diffuse chain damage
+                error_d_c_val      = d_c_val_solve.vector() - d_c_val_prior.vector()
+                error_linf_d_c_val = error_d_c_val.norm('linf')
+                error_d_c          = np.maximum(error_d_c, error_linf_d_c_val)
+            
+            # Monitor the results
+            print("Diffuse chain damage staggered solution scheme: Iteration # {0:3d}; error = {1:>14.8f}".format(iter_sss, error_d_c))
+
+            # Update iteration
+            iter_sss += 1
+        
         return fem
+
+    # def fenics_weak_form_solve_step(self, fem):
+    #     """
+    #     Solve the weak form, which will provide the solution to the displacements and diffuse chain damage, and account for network irreversibility
+    #     Use a staggered solution scheme to solve for the displacements and diffuse chain damage
+    #     """
+    #     # Implement the staggered solution scheme to solve for the displacements and diffuse chain damage
+    #     iter_sss = 1
+    #     error_d_c = 1.
+
+    #     while iter_sss < self.iter_max_d_c_val and error_d_c > self.tol_d_c_val:
+    #         error_d_c = 0.
+    #         # solve for the displacements while holding diffuse chain damage fixed at the prior calculated value
+    #         # lmbda_c_max is the proxy for fixed prior calculated diffuse chain damage
+    #         fem = self.solve_u(fem)
+
+    #         # Account for network irreversibility
+    #         # lmbda_c_max_solve proxy for calculated diffuse chain damage
+    #         lmbda_c_max_prior = project(fem.lmbda_c_max_prior, fem.V_scalar)
+    #         lmbda_c_max_solve = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max_prior), fem.lmbda_c, fem.lmbda_c_max_prior), fem.V_scalar)
+
+    #         # Calculate error in diffuse chain damage for each chain segment number
+    #         for nu_indx in range(self.nu_num):
+    #             # Error in diffuse chain damage from the prior calculated value
+    #             fem.lmbda_c_max.assign(lmbda_c_max_prior)
+    #             d_c_val_prior = project(self.d_c_ufl_func(nu_indx, fem), fem.V_scalar)
+                
+    #             # Error in diffuse chain damage from the currently solved calculated value
+    #             # Accounts for network irreversibility
+    #             fem.lmbda_c_max.assign(lmbda_c_max_solve)
+    #             d_c_val_solve = project(self.d_c_ufl_func(nu_indx, fem), fem.V_scalar)
+                
+    #             # Overall error in diffuse chain damage
+    #             error_d_c_val      = d_c_val_solve.vector() - d_c_val_prior.vector()
+    #             error_linf_d_c_val = error_d_c_val.norm('linf')
+    #             error_d_c          = np.maximum(error_d_c, error_linf_d_c_val)
+            
+    #         # Monitor the results
+    #         print("Diffuse chain damage staggered solution scheme: Iteration # {0:3d}; error = {1:>14.8f}".format(iter_sss, error_d_c))
+
+    #         # Update iteration
+    #         fem.lmbda_c_max_prior.assign(fem.lmbda_c_max)
+    #         iter_sss += 1
+        
+    #     return fem
+
     
-    def fenics_weak_form_initialization(self, parameters):
+    def fenics_weak_form_initialization(self, fem, parameters):
         gp      = parameters.geometry
         chunks  = SimpleNamespace()
 
@@ -352,7 +456,7 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         chunks.overline_Epsilon_c_diss_hat_chunks     = []
         chunks.overline_Epsilon_c_diss_hat_chunks_val = [0. for meshpoint_indx in range(len(gp.meshpoints))]
 
-        return chunks
+        return fem, chunks
 
     def fenics_weak_form_chunk_post_processing(self, deformation, chunks, fem, file_results, parameters):
         """
@@ -405,10 +509,10 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         # lmbda_c_eq
         if ppp.save_lmbda_c_eq_mesh:
             for nu_chunk_indx in range(len(self.nu_chunks_indx_list)):
-                self.nu_chunk_indx  = nu_chunk_indx
-                lmbda_c_eq___nu_val = project(self.lmbda_c_eq_ufl_func(fem), fem.V_scalar)
+                nu_indx             = self.nu_chunks_indx_list[nu_chunk_indx]
+                lmbda_c_eq___nu_val = project(self.lmbda_c_eq_ufl_func(nu_indx, fem), fem.V_scalar)
 
-                nu_str        = str(self.nu_list[self.nu_chunks_indx_list[nu_chunk_indx]])
+                nu_str        = str(self.nu_list[nu_indx])
                 name_str      = "Equilibrium chain stretch nu = "+nu_str
                 parameter_str = "lmbda_c_eq___nu_"+nu_str+"_val"
 
@@ -418,18 +522,18 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         if ppp.save_lmbda_c_eq_chunks:
             for meshpoint_indx in range(len(gp.meshpoints)):
                 for nu_chunk_indx in range(len(self.nu_chunks_indx_list)):
-                    self.nu_chunk_indx  = nu_chunk_indx
-                    lmbda_c_eq___nu_val = project(self.lmbda_c_eq_ufl_func(fem), fem.V_scalar)
+                    nu_indx             = self.nu_chunks_indx_list[nu_chunk_indx]
+                    lmbda_c_eq___nu_val = project(self.lmbda_c_eq_ufl_func(nu_indx, fem), fem.V_scalar)
                     chunks.lmbda_c_eq_chunks_val[meshpoint_indx][nu_chunk_indx] = lmbda_c_eq___nu_val(gp.meshpoints[meshpoint_indx])
             chunks.lmbda_c_eq_chunks.append(deepcopy(chunks.lmbda_c_eq_chunks_val))
         
         # lmbda_nu
         if ppp.save_lmbda_nu_mesh:
             for nu_chunk_indx in range(len(self.nu_chunks_indx_list)):
-                self.nu_chunk_indx = nu_chunk_indx
-                lmbda_nu___nu_val  = project(self.lmbda_nu_ufl_func(fem), fem.V_scalar)
+                nu_indx            = self.nu_chunks_indx_list[nu_chunk_indx]
+                lmbda_nu___nu_val  = project(self.lmbda_nu_ufl_func(nu_indx, fem), fem.V_scalar)
 
-                nu_str        = str(self.nu_list[self.nu_chunks_indx_list[nu_chunk_indx]])
+                nu_str        = str(self.nu_list[nu_indx])
                 name_str      = "Segment stretch nu = "+nu_str
                 parameter_str = "lmbda_nu___nu_"+nu_str+"_val"
 
@@ -439,18 +543,18 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         if ppp.save_lmbda_nu_chunks:
             for meshpoint_indx in range(len(gp.meshpoints)):
                 for nu_chunk_indx in range(len(self.nu_chunks_indx_list)):
-                    self.nu_chunk_indx = nu_chunk_indx
-                    lmbda_nu___nu_val  = project(self.lmbda_nu_ufl_func(fem), fem.V_scalar)
+                    nu_indx           = self.nu_chunks_indx_list[nu_chunk_indx]
+                    lmbda_nu___nu_val = project(self.lmbda_nu_ufl_func(nu_indx, fem), fem.V_scalar)
                     chunks.lmbda_nu_chunks_val[meshpoint_indx][nu_chunk_indx] = lmbda_nu___nu_val(gp.meshpoints[meshpoint_indx])
             chunks.lmbda_nu_chunks.append(deepcopy(chunks.lmbda_nu_chunks_val))
         
         # lmbda_nu_max
         if ppp.save_lmbda_nu_max_mesh:
             for nu_chunk_indx in range(len(self.nu_chunks_indx_list)):
-                self.nu_chunk_indx    = nu_chunk_indx
-                lmbda_nu_max___nu_val = project(self.lmbda_nu_max_ufl_func(fem), fem.V_scalar)
+                nu_indx               = self.nu_chunks_indx_list[nu_chunk_indx]
+                lmbda_nu_max___nu_val = project(self.lmbda_nu_max_ufl_func(nu_indx, fem), fem.V_scalar)
 
-                nu_str        = str(self.nu_list[self.nu_chunks_indx_list[nu_chunk_indx]])
+                nu_str        = str(self.nu_list[nu_indx])
                 name_str      = "Maximum segment stretch nu = "+nu_str
                 parameter_str = "lmbda_nu___nu_"+nu_str+"_val"
 
@@ -460,18 +564,18 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         if ppp.save_lmbda_nu_max_chunks:
             for meshpoint_indx in range(len(gp.meshpoints)):
                 for nu_chunk_indx in range(len(self.nu_chunks_indx_list)):
-                    self.nu_chunk_indx    = nu_chunk_indx
-                    lmbda_nu_max___nu_val = project(self.lmbda_nu_max_ufl_func(fem), fem.V_scalar)
+                    nu_indx               = self.nu_chunks_indx_list[nu_chunk_indx]
+                    lmbda_nu_max___nu_val = project(self.lmbda_nu_max_ufl_func(nu_indx, fem), fem.V_scalar)
                     chunks.lmbda_nu_max_chunks_val[meshpoint_indx][nu_chunk_indx] = lmbda_nu_max___nu_val(gp.meshpoints[meshpoint_indx])
             chunks.lmbda_nu_max_chunks.append(deepcopy(chunks.lmbda_nu_max_chunks_val))
         
         # upsilon_c
         if ppp.save_upsilon_c_mesh:
             for nu_chunk_indx in range(len(self.nu_chunks_indx_list)):
-                self.nu_chunk_indx = nu_chunk_indx
-                upsilon_c___nu_val = project(self.upsilon_c_ufl_func(fem), fem.V_scalar)
+                nu_indx            = self.nu_chunks_indx_list[nu_chunk_indx]
+                upsilon_c___nu_val = project(self.upsilon_c_ufl_func(nu_indx, fem), fem.V_scalar)
 
-                nu_str        = str(self.nu_list[self.nu_chunks_indx_list[nu_chunk_indx]])
+                nu_str        = str(self.nu_list[nu_indx])
                 name_str      = "Chain survival nu = "+nu_str
                 parameter_str = "upsilon_c___nu_"+nu_str+"_val"
 
@@ -481,8 +585,8 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         if ppp.save_upsilon_c_chunks:
             for meshpoint_indx in range(len(gp.meshpoints)):
                 for nu_chunk_indx in range(len(self.nu_chunks_indx_list)):
-                    self.nu_chunk_indx = nu_chunk_indx
-                    upsilon_c___nu_val = project(self.upsilon_c_ufl_func(fem), fem.V_scalar)
+                    nu_indx            = self.nu_chunks_indx_list[nu_chunk_indx]
+                    upsilon_c___nu_val = project(self.upsilon_c_ufl_func(nu_indx, fem), fem.V_scalar)
                     chunks.upsilon_c_chunks_val[meshpoint_indx][nu_chunk_indx] = upsilon_c___nu_val(gp.meshpoints[meshpoint_indx])
             chunks.upsilon_c_chunks.append(deepcopy(chunks.upsilon_c_chunks_val))
 
@@ -501,10 +605,10 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         # d_c
         if ppp.save_d_c_mesh:
             for nu_chunk_indx in range(len(self.nu_chunks_indx_list)):
-                self.nu_chunk_indx = nu_chunk_indx
-                d_c___nu_val       = project(self.d_c_ufl_func(fem), fem.V_scalar)
+                nu_indx      = self.nu_chunks_indx_list[nu_chunk_indx]
+                d_c___nu_val = project(self.d_c_ufl_func(nu_indx, fem), fem.V_scalar)
                 
-                nu_str        = str(self.nu_list[self.nu_chunks_indx_list[nu_chunk_indx]])
+                nu_str        = str(self.nu_list[nu_indx])
                 name_str      = "Chain damage nu = "+nu_str
                 parameter_str = "d_c___nu_"+nu_str+"_val"
 
@@ -514,8 +618,8 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         if ppp.save_d_c_chunks:
             for meshpoint_indx in range(len(gp.meshpoints)):
                 for nu_chunk_indx in range(len(self.nu_chunks_indx_list)):
-                    self.nu_chunk_indx = nu_chunk_indx
-                    d_c___nu_val       = project(self.d_c_ufl_func(fem), fem.V_scalar)
+                    nu_indx      = self.nu_chunks_indx_list[nu_chunk_indx]
+                    d_c___nu_val = project(self.d_c_ufl_func(nu_indx, fem), fem.V_scalar)
                     chunks.d_c_chunks_val[meshpoint_indx][nu_chunk_indx] = d_c___nu_val(gp.meshpoints[meshpoint_indx])
             chunks.d_c_chunks.append(deepcopy(chunks.d_c_chunks_val))
 
@@ -611,36 +715,114 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         D_c_val = D_c_val/self.P_nu_sum
         return D_c_val
     
-    def lmbda_c_eq_ufl_func(self, fem):
-        A_nu___nu_val       = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
+    def lmbda_c_eq_ufl_func(self, nu_indx, fem):
+        A_nu___nu_val       = self.single_chain_list[nu_indx].A_nu
         lmbda_c_eq___nu_val = fem.lmbda_c*A_nu___nu_val
         return lmbda_c_eq___nu_val
 
-    def lmbda_nu_ufl_func(self, fem):
-        A_nu___nu_val       = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
+    def lmbda_nu_ufl_func(self, nu_indx, fem):
+        A_nu___nu_val       = self.single_chain_list[nu_indx].A_nu
         lmbda_c_eq___nu_val = fem.lmbda_c*A_nu___nu_val
-        lmbda_nu___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq___nu_val)
+        lmbda_nu___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq___nu_val)
         return lmbda_nu___nu_val
     
-    def lmbda_nu_max_ufl_func(self, fem):
-        A_nu___nu_val           = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
+    def lmbda_nu_max_ufl_func(self, nu_indx, fem):
+        A_nu___nu_val           = self.single_chain_list[nu_indx].A_nu
         lmbda_c_eq_max___nu_val = fem.lmbda_c_max*A_nu___nu_val
-        lmbda_nu_max___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
+        lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
         return lmbda_nu_max___nu_val
 
-    def upsilon_c_ufl_func(self, fem):
-        A_nu___nu_val           = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
+    def upsilon_c_ufl_func(self, nu_indx, fem):
+        A_nu___nu_val           = self.single_chain_list[nu_indx].A_nu
         lmbda_c_eq_max___nu_val = fem.lmbda_c_max*A_nu___nu_val
-        lmbda_nu_max___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
-        upsilon_c___nu_val      = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].upsilon_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+        lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
+        upsilon_c___nu_val      = self.single_chain_list[nu_indx].upsilon_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
         return upsilon_c___nu_val
 
-    def d_c_ufl_func(self, fem):
-        A_nu___nu_val           = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
+    def d_c_ufl_func(self, nu_indx, fem):
+        A_nu___nu_val           = self.single_chain_list[nu_indx].A_nu
         lmbda_c_eq_max___nu_val = fem.lmbda_c_max*A_nu___nu_val
-        lmbda_nu_max___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
-        d_c___nu_val            = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].d_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+        lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
+        d_c___nu_val            = self.single_chain_list[nu_indx].d_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
         return d_c___nu_val
+
+
+
+
+
+
+
+
+
+
+    # def pk2_stress_ufl_func(self, fem):
+    #     pk2_stress_val = Constant(0.0)*fem.I
+    #     for nu_indx in range(self.nu_num):
+    #         # determine equilibrium chain stretch and segement stretch
+    #         A_nu___nu_val           = self.single_chain_list[nu_indx].A_nu
+    #         lmbda_c_eq___nu_val     = fem.lmbda_c*A_nu___nu_val
+    #         lmbda_c_eq_max___nu_val = fem.lmbda_c_max_prior*A_nu___nu_val
+    #         lmbda_nu___nu_val       = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq___nu_val)
+    #         lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
+    #         # determine chain damage
+    #         upsilon_c___nu_val = self.single_chain_list[nu_indx].upsilon_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+    #         # determine stress response
+    #         pk2_stress_val += upsilon_c___nu_val*self.P_nu_list[nu_indx]*self.nu_list[nu_indx]*self.A_nu_list[nu_indx]*self.single_chain_list[nu_indx].xi_c_ufl_func(lmbda_nu___nu_val, lmbda_c_eq___nu_val)/(3.*fem.lmbda_c)*fem.F
+    #     pk2_stress_val += self.K_G*(fem.J-1)*fem.J*fem.F_inv.T
+    #     return pk2_stress_val
+    
+    # def Upsilon_c_ufl_func(self, fem):
+    #     Upsilon_c_val = Constant(0.0)
+    #     for nu_indx in range(self.nu_num):
+    #         A_nu___nu_val           = self.single_chain_list[nu_indx].A_nu
+    #         lmbda_c_eq_max___nu_val = fem.lmbda_c_max_prior*A_nu___nu_val
+    #         lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
+    #         upsilon_c___nu_val      = self.single_chain_list[nu_indx].upsilon_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+    #         Upsilon_c_val           += self.P_nu_list[nu_indx]*upsilon_c___nu_val
+    #     Upsilon_c_val = Upsilon_c_val/self.P_nu_sum
+    #     return Upsilon_c_val
+
+    # def D_c_ufl_func(self, fem):
+    #     D_c_val = Constant(0.0)
+    #     for nu_indx in range(self.nu_num):
+    #         A_nu___nu_val           = self.single_chain_list[nu_indx].A_nu
+    #         lmbda_c_eq_max___nu_val = fem.lmbda_c_max_prior*A_nu___nu_val
+    #         lmbda_nu_max___nu_val   = self.single_chain_list[nu_indx].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
+    #         d_c___nu_val            = self.single_chain_list[nu_indx].d_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+    #         D_c_val                 += self.P_nu_list[nu_indx]*d_c___nu_val
+    #     D_c_val = D_c_val/self.P_nu_sum
+    #     return D_c_val
+    
+    # def lmbda_c_eq_ufl_func(self, fem):
+    #     A_nu___nu_val       = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
+    #     lmbda_c_eq___nu_val = fem.lmbda_c*A_nu___nu_val
+    #     return lmbda_c_eq___nu_val
+
+    # def lmbda_nu_ufl_func(self, fem):
+    #     A_nu___nu_val       = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
+    #     lmbda_c_eq___nu_val = fem.lmbda_c*A_nu___nu_val
+    #     lmbda_nu___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq___nu_val)
+    #     return lmbda_nu___nu_val
+    
+    # def lmbda_nu_max_ufl_func(self, fem):
+    #     A_nu___nu_val           = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
+    #     lmbda_c_eq_max___nu_val = fem.lmbda_c_max_prior*A_nu___nu_val
+    #     lmbda_nu_max___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
+    #     return lmbda_nu_max___nu_val
+
+    # def upsilon_c_ufl_func(self, fem):
+    #     A_nu___nu_val           = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
+    #     lmbda_c_eq_max___nu_val = fem.lmbda_c_max_prior*A_nu___nu_val
+    #     lmbda_nu_max___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
+    #     upsilon_c___nu_val      = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].upsilon_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+    #     return upsilon_c___nu_val
+
+    # def d_c_ufl_func(self, fem):
+    #     A_nu___nu_val           = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].A_nu
+    #     lmbda_c_eq_max___nu_val = fem.lmbda_c_max_prior*A_nu___nu_val
+    #     lmbda_nu_max___nu_val   = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].lmbda_nu_ufl_func(lmbda_c_eq_max___nu_val)
+    #     d_c___nu_val            = self.single_chain_list[self.nu_chunks_indx_list[self.nu_chunk_indx]].d_c_ufl_func(self.k_cond_val, lmbda_nu_max___nu_val, lmbda_c_eq_max___nu_val)
+    #     return d_c___nu_val
 
 class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqualStrainRateDependentNetwork:
 
@@ -1196,6 +1378,8 @@ class GeneralizeduFJCNetwork(TwoDimensionalPlaneStrainIncompressibleNonaffineEig
         self.tol_Gamma_val_stag_NR   = getattr(dp, "tol_Gamma_val_stag_NR")
         self.epsilon                 = getattr(dp, "epsilon")
         self.max_J_val_cond          = getattr(dp, "max_J_val_cond")
+        self.iter_max_d_c_val        = getattr(dp, "iter_max_d_c_val")
+        self.tol_d_c_val             = getattr(dp, "tol_d_c_val")
         self.k_cond_val              = getattr(dp, "k_cond_val")
 
 

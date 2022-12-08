@@ -114,7 +114,7 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
     
     def prefix(self):
         mp = self.parameters.material
-        return mp.physical_dimensionality+"_"+mp.two_dimensional_formulation+"_"+mp.incompressibility_assumption+"_"+mp.macro2micro_deformation_assumption+"_"+mp.micro2macro_homogenization_scheme+"_"+mp.chain_level_load_sharing+"_"+mp.rate_dependence
+        return mp.physical_dimensionality+"_"+mp.two_dimensional_formulation+"_"+mp.incompressibility_assumption+"_"+mp.macro2micro_deformation_assumption+"_"+mp.micro2macro_homogenization_scheme+"_"+mp.chain_level_load_sharing+"_"+mp.rate_dependence+"_"+"u_solve_damage__staggered_scheme_freeze_damage"
     
     def define_mesh(self):
         """

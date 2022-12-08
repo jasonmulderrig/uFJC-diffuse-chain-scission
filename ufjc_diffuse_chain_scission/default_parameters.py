@@ -245,6 +245,8 @@ def default_deformation_parameters():
     tol_Gamma_val_stag_NR   = 1e-2
     epsilon                 = 1e-12
     max_J_val_cond          = 1e12
+    iter_max_d_c_val        = 1000
+    tol_d_c_val             = 1e-4
     k_cond_val              = 1e-8
 
     deformation.K_G                     = K_G
@@ -259,6 +261,8 @@ def default_deformation_parameters():
     deformation.tol_Gamma_val_stag_NR   = tol_Gamma_val_stag_NR
     deformation.epsilon                 = epsilon
     deformation.max_J_val_cond          = max_J_val_cond
+    deformation.iter_max_d_c_val        = iter_max_d_c_val
+    deformation.tol_d_c_val             = tol_d_c_val
     deformation.k_cond_val              = k_cond_val
 
     # timing parameters

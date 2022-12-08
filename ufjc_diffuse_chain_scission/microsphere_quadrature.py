@@ -11,7 +11,7 @@ import quadpy as qp
 # Full network microsphere quadrature class
 ################################################################################################################################
 
-class MicrosphereQuadratureScheme:
+class MicrosphereQuadratureScheme: # add functionality to access any sphere quadrature scheme that quadpy offers
     
     ############################################################################################################################
     # Initialization

@@ -668,7 +668,11 @@ class GeneralizeduFJC:
         return 1. - self.p_c_sur_hat_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat)
     
     def upsilon_c_ufl_func(self, k_cond_val, lmbda_nu_hat, lmbda_c_eq_hat):
-        return (1.-k_cond_val)*self.p_c_sur_hat_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat) + k_cond_val
+        # min_upsilon_c_val = 0.01
+        upsilon_c_val = (1.-k_cond_val)*self.p_c_sur_hat_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat) + k_cond_val
+        # upsilon_c_val = self.p_c_sur_hat_ufl_func(lmbda_nu_hat, lmbda_c_eq_hat)
+        # upsilon_c_val = conditional(lt(upsilon_c_val, min_upsilon_c_val), min_upsilon_c_val, upsilon_c_val)
+        return upsilon_c_val
 
     def d_c_ufl_func(self, k_cond_val, lmbda_nu_hat, lmbda_c_eq_hat):
         return 1. - self.upsilon_c_ufl_func(k_cond_val, lmbda_nu_hat, lmbda_c_eq_hat)

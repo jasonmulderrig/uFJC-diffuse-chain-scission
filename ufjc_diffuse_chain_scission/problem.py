@@ -254,7 +254,9 @@ class uFJCDiffuseChainScissionProblem(object):
         Solve the evolution problem for the weak form in FEniCS through the applied deformation history at each time step
         """
         # initialization
-        weak_form_chunks = self.material.fenics_weak_form_initialization(self.parameters)
+        fem, weak_form_chunks = self.material.fenics_weak_form_initialization(self.fem, self.parameters)
+        
+        self.fem = fem
 
         # grab deformation
         deformation = self.deformation
