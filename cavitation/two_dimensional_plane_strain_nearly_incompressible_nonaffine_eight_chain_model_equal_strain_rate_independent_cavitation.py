@@ -45,10 +45,10 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         p.material.macro2micro_deformation_assumption = "nonaffine"
 
         # Define the chain length statistics in the network
-        nu_distribution = "itskov"
-        nu_list         = [i for i in range(5, 16)] # nu = 5 -> nu = 15
+        nu_distribution = "uniform" # "itskov"
+        nu_list         = [6] # [i for i in range(5, 16)] # nu = 5 -> nu = 15
         nu_min          = min(nu_list)
-        nu_bar          = 8
+        nu_bar          = 6
         Delta_nu        = nu_bar-nu_min
         nu_list         = nu_list
         nu_min          = nu_min
@@ -71,7 +71,7 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         for i in range(len(nu_chunks_list)):
             nu_chunks_indx_list[i] = nu_list.index(nu_chunks_list[i])
         nu_chunks_label_list = [r'$\nu='+str(nu_list[nu_chunks_indx_list[i]])+'$' for i in range(len(nu_chunks_list))]
-        nu_chunks_color_list = ['orange', 'blue', 'green'] # , 'red', 'purple', 'brown']
+        nu_chunks_color_list = ['blue'] # ['orange', 'blue', 'green'] # , 'red', 'purple', 'brown']
         
         p.material.nu_chunks_list       = nu_chunks_list
         p.material.nu_chunks_indx_list  = nu_chunks_indx_list

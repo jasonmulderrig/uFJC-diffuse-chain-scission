@@ -6,8 +6,8 @@
 from __future__ import division
 from dolfin import *
 from .single_chain import GeneralizeduFJC, EqualStrainGeneralizeduFJC, EqualForceGeneralizeduFJC
-from .microsphere_quadrature import MicrosphereQuadratureScheme
-from .microdisk_quadrature import MicrodiskQuadratureScheme
+# from .microsphere_quadrature import MicrosphereQuadratureScheme
+# from .microdisk_quadrature import MicrodiskQuadratureScheme
 import sys
 import numpy as np
 from types import SimpleNamespace
@@ -264,8 +264,8 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         fem.lmbda_c     = sqrt(fem.I_C/3.0)
         # fem.lmbda_c_max = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max_prior), fem.lmbda_c, fem.lmbda_c_max_prior), fem.V_scalar)
 
-        # Calculate the work function using the weak form; specify the quadrature degree for efficiency pk2_stress_ufl_func
-        fem.WF = (inner(self.pk2_stress_ufl_func(fem), grad(fem.v_u)))*dx(metadata=femp.metadata) - dot(fem.b, fem.v_u)*dx(metadata=femp.metadata) - dot(fem.t, fem.v_u)*ds
+        # Calculate the work function using the weak form; specify the quadrature degree for efficiency first_pk_stress_ufl_func
+        fem.WF = (inner(self.first_pk_stress_ufl_func(fem), grad(fem.v_u)))*dx(metadata=femp.metadata) - dot(fem.b, fem.v_u)*dx(metadata=femp.metadata) - dot(fem.t, fem.v_u)*ds
 
         # Calculate the Gateaux derivative
         fem.Jac = derivative(fem.WF, fem.u, fem.du)
@@ -285,18 +285,18 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
 
         return fem
     
-    # def fenics_weak_form_solve_step(self, fem):
-    #     """
-    #     Solve the weak form, which will provide the solution to the displacements and diffuse chain damage, and account for network irreversibility
-    #     """
-    #     fem = self.solve_u(fem)
+    def fenics_weak_form_solve_step(self, fem):
+        """
+        Solve the weak form, which will provide the solution to the displacements and diffuse chain damage, and account for network irreversibility
+        """
+        fem = self.solve_u(fem)
 
-    #     # Account for network irreversibility
-    #     # lmbda_c_max_check = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max), fem.lmbda_c, fem.lmbda_c_max), fem.V_scalar)
-    #     # fem.lmbda_c_max.assign(lmbda_c_max_check)
-    #     fem.lmbda_c_max = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max), fem.lmbda_c, fem.lmbda_c_max), fem.V_scalar)
+        # Account for network irreversibility
+        # lmbda_c_max_check = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max), fem.lmbda_c, fem.lmbda_c_max), fem.V_scalar)
+        # fem.lmbda_c_max.assign(lmbda_c_max_check)
+        fem.lmbda_c_max = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max), fem.lmbda_c, fem.lmbda_c_max), fem.V_scalar)
 
-    #     return fem
+        return fem
 
     # def fenics_weak_form_solve_step(self, fem):
     #     """
@@ -310,49 +310,49 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
 
     #     return fem
 
-    def fenics_weak_form_solve_step(self, fem):
-        """
-        Solve the weak form, which will provide the solution to the displacements and diffuse chain damage, and account for network irreversibility
-        Use a staggered solution scheme to solve for the displacements and diffuse chain damage
-        """
-        # Implement the staggered solution scheme to solve for the displacements and diffuse chain damage
-        iter_sss = 1
-        error_d_c = 1.
+    # def fenics_weak_form_solve_step(self, fem):
+    #     """
+    #     Solve the weak form, which will provide the solution to the displacements and diffuse chain damage, and account for network irreversibility
+    #     Use a staggered solution scheme to solve for the displacements and diffuse chain damage
+    #     """
+    #     # Implement the staggered solution scheme to solve for the displacements and diffuse chain damage
+    #     iter_sss = 1
+    #     error_d_c = 1.
 
-        while iter_sss < self.iter_max_d_c_val and error_d_c > self.tol_d_c_val:
-            error_d_c = 0.
-            # solve for the displacements while holding diffuse chain damage fixed at the prior calculated value
-            # lmbda_c_max is the proxy for fixed prior calculated diffuse chain damage
-            fem = self.solve_u(fem)
+    #     while iter_sss < self.iter_max_d_c_val and error_d_c > self.tol_d_c_val:
+    #         error_d_c = 0.
+    #         # solve for the displacements while holding diffuse chain damage fixed at the prior calculated value
+    #         # lmbda_c_max is the proxy for fixed prior calculated diffuse chain damage
+    #         fem = self.solve_u(fem)
 
-            # Account for network irreversibility
-            # lmbda_c_max_solve proxy for calculated diffuse chain damage
-            lmbda_c_max_prior = project(fem.lmbda_c_max, fem.V_scalar)
-            lmbda_c_max_solve = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max), fem.lmbda_c, fem.lmbda_c_max), fem.V_scalar)
+    #         # Account for network irreversibility
+    #         # lmbda_c_max_solve proxy for calculated diffuse chain damage
+    #         lmbda_c_max_prior = project(fem.lmbda_c_max, fem.V_scalar)
+    #         lmbda_c_max_solve = project(conditional(gt(fem.lmbda_c, fem.lmbda_c_max), fem.lmbda_c, fem.lmbda_c_max), fem.V_scalar)
 
-            # Calculate error in diffuse chain damage for each chain segment number
-            for nu_indx in range(self.nu_num):
-                # Error in diffuse chain damage from the prior calculated value
-                fem.lmbda_c_max = lmbda_c_max_prior # fem.lmbda_c_max.assign(lmbda_c_max_prior)
-                d_c_val_prior = project(self.d_c_ufl_func(nu_indx, fem), fem.V_scalar)
+    #         # Calculate error in diffuse chain damage for each chain segment number
+    #         for nu_indx in range(self.nu_num):
+    #             # Error in diffuse chain damage from the prior calculated value
+    #             fem.lmbda_c_max = lmbda_c_max_prior # fem.lmbda_c_max.assign(lmbda_c_max_prior)
+    #             d_c_val_prior = project(self.d_c_ufl_func(nu_indx, fem), fem.V_scalar)
                 
-                # Error in diffuse chain damage from the currently solved calculated value
-                # Accounts for network irreversibility
-                fem.lmbda_c_max = lmbda_c_max_solve # fem.lmbda_c_max.assign(lmbda_c_max_solve)
-                d_c_val_solve = project(self.d_c_ufl_func(nu_indx, fem), fem.V_scalar)
+    #             # Error in diffuse chain damage from the currently solved calculated value
+    #             # Accounts for network irreversibility
+    #             fem.lmbda_c_max = lmbda_c_max_solve # fem.lmbda_c_max.assign(lmbda_c_max_solve)
+    #             d_c_val_solve = project(self.d_c_ufl_func(nu_indx, fem), fem.V_scalar)
                 
-                # Overall error in diffuse chain damage
-                error_d_c_val      = d_c_val_solve.vector() - d_c_val_prior.vector()
-                error_linf_d_c_val = error_d_c_val.norm('linf')
-                error_d_c          = np.maximum(error_d_c, error_linf_d_c_val)
+    #             # Overall error in diffuse chain damage
+    #             error_d_c_val      = d_c_val_solve.vector() - d_c_val_prior.vector()
+    #             error_linf_d_c_val = error_d_c_val.norm('linf')
+    #             error_d_c          = np.maximum(error_d_c, error_linf_d_c_val)
             
-            # Monitor the results
-            print("Diffuse chain damage staggered solution scheme: Iteration # {0:3d}; error = {1:>14.8f}".format(iter_sss, error_d_c))
+    #         # Monitor the results
+    #         print("Diffuse chain damage staggered solution scheme: Iteration # {0:3d}; error = {1:>14.8f}".format(iter_sss, error_d_c))
 
-            # Update iteration
-            iter_sss += 1
+    #         # Update iteration
+    #         iter_sss += 1
         
-        return fem
+    #     return fem
 
     # def fenics_weak_form_solve_step(self, fem):
     #     """
@@ -476,12 +476,12 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         
         # sigma
         if ppp.save_sigma_mesh:
-            sigma_val = project(self.pk2_stress_ufl_func(fem)/fem.J*fem.F.T, fem.V_tensor)
+            sigma_val = project(self.first_pk_stress_ufl_func(fem)/fem.J*fem.F.T, fem.V_tensor)
             sigma_val.rename("Normalized Cauchy stress", "sigma_val")
             file_results.write(sigma_val, deformation.t_val)
         
         if ppp.save_sigma_chunks:
-            sigma_val = project(self.pk2_stress_ufl_func(fem)/fem.J*fem.F.T, fem.V_tensor)
+            sigma_val = project(self.first_pk_stress_ufl_func(fem)/fem.J*fem.F.T, fem.V_tensor)
             chunks    = self.weak_form_store_calculated_sigma_chunks(sigma_val, femp.tensor2vector_indx_dict, gp.meshpoints, chunks)
         
         # F
@@ -677,7 +677,7 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
         
         return chunks
 
-    def pk2_stress_ufl_func(self, fem):
+    def first_pk_stress_ufl_func(self, fem):
         pk2_stress_val = Constant(0.0)*fem.I
         for nu_indx in range(self.nu_num):
             # determine equilibrium chain stretch and segement stretch
@@ -755,7 +755,7 @@ class TwoDimensionalPlaneStrainNearlyIncompressibleNonaffineEightChainModelEqual
 
 
 
-    # def pk2_stress_ufl_func(self, fem):
+    # def first_pk_stress_ufl_func(self, fem):
     #     pk2_stress_val = Constant(0.0)*fem.I
     #     for nu_indx in range(self.nu_num):
     #         # determine equilibrium chain stretch and segement stretch
@@ -1425,7 +1425,7 @@ class GeneralizeduFJCNetwork(TwoDimensionalPlaneStrainIncompressibleNonaffineEig
                 if self.microdisk_quadrature_order is None:
                     sys.exit('Error: Need to specify microdisk quadrature order number in order to utilize the full network microdisk micro-to-macro homogenization scheme.')
                 else:
-                    self.microdisk = MicrodiskQuadratureScheme(self.microdisk_quadrature_order)
+                    pass # self.microdisk = MicrodiskQuadratureScheme(self.microdisk_quadrature_order)
         
         elif self.physical_dimension == 3:
             if self.micro2macro_homogenization_scheme == 'full_network_microdisk_model':
@@ -1436,7 +1436,7 @@ class GeneralizeduFJCNetwork(TwoDimensionalPlaneStrainIncompressibleNonaffineEig
                 if self.microsphere_quadrature_order is None:
                     sys.exit('Error: Need to specify microsphere quadrature order number in order to utilize the full network microsphere micro-to-macro homogenization scheme.')
                 else:
-                    self.microsphere = MicrosphereQuadratureScheme(self.microsphere_quadrature_order)
+                    pass # self.microsphere = MicrosphereQuadratureScheme(self.microsphere_quadrature_order)
         
         
         # Specify chain composition
@@ -1989,3 +1989,5 @@ class GeneralizeduFJCNetwork(TwoDimensionalPlaneStrainIncompressibleNonaffineEig
 
         if mp.nu_distribution == "itskov":
             return (1/(mp.Delta_nu+1))*(1+(1/mp.Delta_nu))**(mp.nu_min-nu)
+        if mp.nu_distribution == "uniform":
+            return 1./len(mp.nu_list)

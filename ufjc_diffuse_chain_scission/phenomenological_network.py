@@ -5,8 +5,8 @@
 # Import necessary libraries
 from __future__ import division
 from dolfin import *
-from .microsphere_quadrature import MicrosphereQuadratureScheme
-from .microdisk_quadrature import MicrodiskQuadratureScheme
+# from .microsphere_quadrature import MicrosphereQuadratureScheme
+# from .microdisk_quadrature import MicrodiskQuadratureScheme
 import sys
 import numpy as np
 from types import SimpleNamespace
